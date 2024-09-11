@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TetaBackend.Domain.Entities;
 using TetaBackend.Domain.Entities.Base;
+using TetaBackend.Domain.Entities;
 
 namespace TetaBackend.Domain;
 
@@ -10,7 +10,8 @@ public class DataContext: DbContext
     {
     }
     
-    public DbSet<User> Users { get; set; }
+    public DbSet<UserEntity> Users { get; set; }
+    public DbSet<UserInfoEntity> UserInfos { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
