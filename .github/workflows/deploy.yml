@@ -21,6 +21,12 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
+    - uses: actions/checkout@master
+    - name: copy file
+      uses: canastro/copy-file-action@master
+      with:
+        source: "Teta/appsettings.Example.json"
+        target: "Teta/appsettings.json"
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
