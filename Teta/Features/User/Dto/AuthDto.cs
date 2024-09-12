@@ -1,6 +1,6 @@
-﻿namespace TetaBackend.User.Dto;
+﻿namespace TetaBackend.Features.User.Dto;
 
-public class RegisterDto
+public class AuthDto
 {
     public string Username { get; set; }
 

@@ -1,6 +1,6 @@
 ﻿using BC = BCrypt.Net.BCrypt;
 
-namespace TetaBackend.User.Utilities;
+namespace TetaBackend.Features.User.Utilities;
 
 public static class PasswordHasher
 {
