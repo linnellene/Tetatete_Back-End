@@ -22,13 +22,8 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - uses: actions/checkout@master
-    - name: copy file
-      uses: canastro/copy-file-action@master
-      with:
-        source: "Teta/appsettings.Example.json"
-        target: "Teta/appsettings.json"
-    - name: Set correct permissions for appsettings.json
-      run: sudo chmod 644 Teta/appsettings.json
+    - name: Copy and rename file
+      run: cp Teta/appsettings.Example.json Teta/appsettings.json
     - name: App Settings Variable Substitution
       uses: microsoft/variable-substitution@v1
       with:
