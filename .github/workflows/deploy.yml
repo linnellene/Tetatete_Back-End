@@ -10,7 +10,7 @@ on:
 
 env:
   ELASTIC_BEANSTALK_NAME: tetatet-backend
-  ELASTIC_BEANSTALK_ENV_NAME: tetatet-backend-dev
+  ELASTIC_BEANSTALK_ENV_NAME: Tetatet-backend-env
 
 jobs:
   build:
