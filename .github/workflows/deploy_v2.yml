@@ -36,7 +36,7 @@ jobs:
         ConnectionStrings.DefaultConnection: 'test'
   
     - name: Publish prod
-      run: cd Teta; dotnet restore; dotnet publish -r win10-x64 --configuration "Release" --self-contained "true" -o ../site;
+      run: cd Teta; dotnet restore; dotnet publish -r win-x64 --configuration "Release" --self-contained "true" -o ../site;
 
     - name: Generate deployment package 
       run: cd site; zip ../site.zip *; cd ..; zip ${{github.run_id}}.zip site.zip aws-windows-deployment-manifest.json
