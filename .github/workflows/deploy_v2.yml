@@ -17,50 +17,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
+        
     - uses: actions/checkout@master
+    
     - name: Copy and rename file
       run: cp Teta/appsettings.Example.json Teta/appsettings.json
+      
     - name: App Settings Variable Substitution
       uses: microsoft/variable-substitution@v1
       with:
         files: 'Teta/appsettings.json'
       env:
         ConnectionStrings.DefaultConnection: 'test'
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Pack
-      run: |
-        dotnet publish -c Release --output "${{ github.workspace }}/${{github.run_id}}"
-        cd ${{github.run_id}}
-        zip -r ../${{github.run_id}}.zip .
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4.3.3
-      with: 
-        name: deploy-files
-        path: ${{github.run_id}}.zip
-        
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: deploy-files
-          path: .
-      - name: Deploy to EB
-        uses: einaregilsson/beanstalk-deploy@v22
-        with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: tetatet-backend
-          environment_name: Tetatet-backend-env
-          version_label: ${{ github.run_id }}
-          region: us-west-1
-          deployment_package: ${{github.run_id}}.zip
+  
+    - name: Publish prod
+      run: cd Teta; dotnet restore; dotnet publish -r win10-x64 --configuration "Release" --self-contained "true" -o ../site;
+
+    - name: Generate deployment package 
+      run: cd site; zip ../site.zip *; cd ..; zip ${{github.run_id}}.zip site.zip aws-windows-deployment-manifest.json
+      
+    - name: Deploy to EB
+      uses: einaregilsson/beanstalk-deploy@v22
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: ${{ env.ELASTIC_BEANSTALK_NAME }}
+        environment_name: ${{ env.ELASTIC_BEANSTALK_ENV_NAME }}
+        version_label: ${{ github.run_id }}
+        region: us-west-1
+        deployment_package: ${{github.run_id}}.zip
