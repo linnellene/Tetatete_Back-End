@@ -58,4 +58,4 @@ jobs:
           environment_name: $ELASTIC_BEANSTALK_ENV_NAME
           version_label: ${{ github.run_id }}
           region: us-west-1
-          deployment_package: "deploy-files/${{github.run_id}}.zip"
+          deployment_package: "${{github.run_id}}.zip"
