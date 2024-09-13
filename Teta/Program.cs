@@ -15,8 +15,9 @@ builder.Logging.AddConsole();
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-builder.Services.AddTransient<IJwtService, JwtService>();
-builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

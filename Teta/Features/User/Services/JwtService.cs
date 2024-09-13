@@ -38,4 +38,38 @@ public class JwtService: IJwtService
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+    
+    public JwtSecurityToken? ValidateAndDecodeJwtToken(string token)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        
+        var secret = _configuration.GetSection("Jwt:Secret").Value;
+
+        if (secret is null)
+        {
+            return null;
+        }
+        
+        var encodedSecret = Encoding.ASCII.GetBytes(secret); 
+
+        try
+        {
+            tokenHandler.ValidateToken(token, new TokenValidationParameters
+            {
+                IssuerSigningKey = new SymmetricSecurityKey(encodedSecret),
+                ValidateIssuerSigningKey = true,
+                ValidateLifetime = true,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+            }, out var validatedToken);
+
+            var jwtToken = (JwtSecurityToken)validatedToken;
+            
+            return jwtToken;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
