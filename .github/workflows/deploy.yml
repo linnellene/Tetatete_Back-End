@@ -30,7 +30,7 @@ jobs:
       with:
         files: 'Teta/appsettings.json'
       env:
-        ConnectionStrings.DefaultConnection: 'test'
+        ConnectionStrings.DefaultConnection: ${{ secrets.DB_CONNECTION }}
   
     - name: Publish prod
       run: cd Teta; dotnet restore; dotnet publish -r win-x64 --configuration "Release" --self-contained "true" -o ../site;
