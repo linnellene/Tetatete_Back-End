@@ -30,7 +30,11 @@ jobs:
       with:
         files: 'Teta/appsettings.json'
       env:
-        ConnectionStrings.DefaultConnection: ${{ secrets.DB_CONNECTION }}
+        ConnectionStrings.Default: ${{ secrets.DB_CONNECTION }}
+        Jwt.Secret: ${{ secrets.JWT_SECRET }}
+        Amazon.S3.AccessKey: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        Amazon.S3.SecretKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        Amazon.S3.BucketName: 'tetatet-images'
   
     - name: Publish prod
       run: cd Teta; dotnet restore; dotnet publish -r win-x64 --configuration "Release" --self-contained "true" -o ../site;
