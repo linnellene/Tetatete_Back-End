@@ -16,6 +16,7 @@ builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddTransient<IJwtService, JwtService>();
+builder.Services.AddTransient<IImageService, ImageService>();
 builder.Services.AddTransient<IUserService, UserService>();
 
 builder.Services.AddControllers();

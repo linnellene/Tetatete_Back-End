@@ -8,7 +8,7 @@ public class UserEntity : BaseEntity
 
     public string Password { get; set; }
     
-    public int? UserInfoId { get; set; }
+    public Guid? UserInfoId { get; set; }
 
     public UserInfoEntity? UserInfo;
 }
