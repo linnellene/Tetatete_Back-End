@@ -54,10 +54,8 @@ jobs:
         with:
           name: deploy-files
           path: .
-      - name: List files
-        run: ls -R
       - name: Deploy to EB
-        uses: einaregilsson/beanstalk-deploy@v16
+        uses: einaregilsson/beanstalk-deploy@v22
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -65,4 +63,4 @@ jobs:
           environment_name: $ELASTIC_BEANSTALK_ENV_NAME
           version_label: ${{ github.run_id }}
           region: us-west-1
-          deployment_package: "${{github.run_id}}.zip"
+          deployment_package: ${{github.run_id}}.zip
