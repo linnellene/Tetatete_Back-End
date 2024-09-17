@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TetaBackend.Domain;
+using TetaBackend.Features.Shared.Middlewares;
 using TetaBackend.Features.User.Interfaces;
 using TetaBackend.Features.User.Services;
 
@@ -24,8 +25,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Teta API", Version = "v1" });
+    c.EnableAnnotations();
     
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Teta API", Version = "v1" });
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -64,10 +67,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
 var app = builder.Build();
 
+app.UseMiddleware<JwtMiddleware>();
+
 // if (app.Environment.IsDevelopment())
 // {
-    app.UseSwagger();   
-    app.UseSwaggerUI();
+app.UseSwagger();
+app.UseSwaggerUI();
 // }
 
 app.UseCors(x => x
@@ -76,6 +81,7 @@ app.UseCors(x => x
     .AllowCredentials()
     .WithOrigins(builder.Configuration.GetSection("AllowedCorsOrigins").Get<string[]>())
 );
+
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

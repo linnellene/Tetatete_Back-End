@@ -2,7 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using TetaBackend.Domain;
 using TetaBackend.Domain.Entities;
+using TetaBackend.Domain.Entities.CategoryInfo;
+using TetaBackend.Features.Interfaces;
 using TetaBackend.Features.User.Dto;
+using TetaBackend.Features.User.Dto.Category;
+using TetaBackend.Features.User.Enums;
 using TetaBackend.Features.User.Interfaces;
 using TetaBackend.Features.User.Utilities;
 
@@ -160,6 +164,203 @@ public class UserService : IUserService
 
         return userInfo;
     }
+    
+    public async Task<CategoryType?> GetFulfilledInfoType(Guid userId)
+    {
+        var user = await _dataContext.Users.Include(u => u.FriendsCategoryInfo).Include(u => u.LoveCategoryInfo)
+            .Include(u => u.WorkCategoryInfo).FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user is null)
+        {
+            return null;
+        }
+
+        if (user.LoveCategoryInfo is not null)
+        {
+            return CategoryType.Love;
+        }
+
+        if (user.FriendsCategoryInfo is not null)
+        {
+            return CategoryType.Friends;
+        }
+
+        if (user.WorkCategoryInfo is not null)
+        {
+            return CategoryType.Work;
+        }
+
+        return null;
+    }
+
+    public async Task<TCategory?> GetCategoryInfo<TCategory>(Guid userId) where TCategory : class, ICategory
+    {
+        TCategory? info;
+
+        if (typeof(TCategory) == typeof(WorkCategoryInfoEntity))
+        {
+            info = await _dataContext.WorkCategoryInfos.FirstOrDefaultAsync(w => w.UserId == userId) as TCategory;
+        }
+        else if (typeof(TCategory) == typeof(FriendsCategoryInfoEntity))
+        {
+            info = await _dataContext.FriendsCategoryInfos.FirstOrDefaultAsync(f => f.UserId == userId) as TCategory;
+        }
+        else
+        {
+            info = await _dataContext.LoveCategoryInfos.FirstOrDefaultAsync(l => l.UserId == userId) as TCategory;
+        }
+
+        return info;
+    }
+
+    public async Task FillCategoryInfo<TCategory>(Guid userId, TCategory info)
+        where TCategory : class, ICategory
+    {
+        var existingCategoryType = await GetFulfilledInfoType(userId);
+
+        var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (existingCategoryType is not null)
+        {
+            throw new ArgumentException("Info already exists.");
+        }
+
+        if (user is null)
+        {
+            throw new ArgumentException("Invalid user id.");
+        }
+
+        if (typeof(TCategory) == typeof(WorkCategoryInfoEntity))
+        {
+            var parsedInfo = (info as WorkCategoryInfoEntity)!;
+
+            ValidateWorkCategoryInfo(parsedInfo.Info, parsedInfo.Income, parsedInfo.Skills);
+
+            var entity = await _dataContext.WorkCategoryInfos.AddAsync(parsedInfo);
+            user.WorkCategoryInfoId = entity.Entity.Id;
+        }
+        else if (typeof(TCategory) == typeof(FriendsCategoryInfoEntity))
+        {
+            ValidateFriendsCategoryInfo(info.Info);
+
+            var entity = await _dataContext.FriendsCategoryInfos.AddAsync((info as FriendsCategoryInfoEntity)!);
+            user.FriendsCategoryInfoId = entity.Entity.Id;
+        }
+        else if (typeof(TCategory) == typeof(LoveCategoryInfoEntity))
+        {
+            var parsedInfo = (info as LoveCategoryInfoEntity)!;
+
+            await ValidateLoveCategoryInfo(parsedInfo.GenderId, parsedInfo.Info, parsedInfo.MinAge, parsedInfo.MaxAge);
+
+            var entity = await _dataContext.LoveCategoryInfos.AddAsync(parsedInfo);
+            user.LoveCategoryInfoId = entity.Entity.Id;
+        }
+
+        await _dataContext.SaveChangesAsync();
+    }
+
+    public async Task UpdateCategoryInfo<TCategory>(Guid infoId, TCategory? info)
+        where TCategory : class, ICategory
+    {
+        if (typeof(TCategory) == typeof(UpdateWorkCategoryInfoDto))
+        {
+            var parsedInfo = (info as UpdateWorkCategoryInfoDto)!;
+
+            var existingInfo = await _dataContext.WorkCategoryInfos.FirstOrDefaultAsync(w => w.Id == infoId);
+
+            if (existingInfo is null)
+            {
+                throw new ArgumentException("Category info not found.");
+            }
+
+            ValidateWorkCategoryInfo(parsedInfo.Info, parsedInfo.Income, parsedInfo.Skills);
+
+            existingInfo.Info = parsedInfo.Info ?? existingInfo.Info;
+            existingInfo.Skills = parsedInfo.Skills ?? existingInfo.Skills;
+            existingInfo.Income = parsedInfo.Income ?? existingInfo.Income;
+            existingInfo.LookingFor = parsedInfo.LookingFor ?? existingInfo.LookingFor;
+        }
+        else if (typeof(TCategory) == typeof(UpdateFriendsCategoryInfoDto))
+        {
+            var parsedInfo = (info as UpdateFriendsCategoryInfoDto)!;
+
+            var existingInfo = await _dataContext.FriendsCategoryInfos.FirstOrDefaultAsync(f => f.Id == infoId);
+
+            if (existingInfo is null)
+            {
+                throw new ArgumentException("Category info not found.");
+            }
+
+            ValidateFriendsCategoryInfo(parsedInfo.Info);
+
+            existingInfo.Info = parsedInfo.Info ?? existingInfo.Info;
+        }
+        else if (typeof(TCategory) == typeof(UpdateLoveCategoryInfoDto))
+        {
+            var parsedInfo = (info as UpdateLoveCategoryInfoDto)!;
+
+            var existingInfo = await _dataContext.LoveCategoryInfos.FirstOrDefaultAsync(l => l.Id == infoId);
+
+            if (existingInfo is null)
+            {
+                throw new ArgumentException("Category info not found.");
+            }
+
+            await ValidateLoveCategoryInfo(parsedInfo.GenderId, parsedInfo.Info, parsedInfo.MinAge, parsedInfo.MaxAge);
+
+            existingInfo.Info = parsedInfo.Info ?? existingInfo.Info;
+            existingInfo.GenderId = parsedInfo.GenderId ?? existingInfo.GenderId;
+            existingInfo.MaxAge = parsedInfo.MaxAge ?? existingInfo.MaxAge;
+            existingInfo.MinAge = parsedInfo.MinAge ?? existingInfo.MinAge;
+        }
+
+        await _dataContext.SaveChangesAsync();
+    }
+
+    public async Task DeleteCategoryInfo(CategoryType type, Guid userId)
+    {
+        switch (type)
+        {
+            case CategoryType.Work:
+            {
+                var infoToDelete = await _dataContext.WorkCategoryInfos.FirstOrDefaultAsync(w => w.UserId == userId);
+
+                if (infoToDelete is null)
+                {
+                    throw new ArgumentException("Info doesn't exist");
+                }
+
+                _dataContext.WorkCategoryInfos.Remove(infoToDelete);
+                break;
+            }
+            case CategoryType.Friends:
+            {
+                var infoToDelete = await _dataContext.FriendsCategoryInfos.FirstOrDefaultAsync(f => f.UserId == userId);
+
+                if (infoToDelete is null)
+                {
+                    throw new ArgumentException("Info doesn't exist");
+                }
+
+                _dataContext.FriendsCategoryInfos.Remove(infoToDelete);
+                break;
+            }
+            default:
+            {
+                var infoToDelete = await _dataContext.LoveCategoryInfos.FirstOrDefaultAsync(l => l.UserId == userId);
+
+                if (infoToDelete is null)
+                {
+                    throw new ArgumentException("Info doesn't exist");
+                }
+
+                _dataContext.LoveCategoryInfos.Remove(infoToDelete);
+                break;
+            }
+        }
+
+        await _dataContext.SaveChangesAsync();
+    }
 
     private async Task ValidateUserInfo(Guid? placeOfBirthId, Guid? locationId, Guid? genderId,
         IEnumerable<Guid>? languages,
@@ -190,18 +391,90 @@ public class UserService : IUserService
             throw new ArgumentException("Invalid languages.");
         }
 
-        if (fullName is not null &&
-            (fullName.Trim().Count(c => !char.IsWhiteSpace(c)) < 3 || !Regex.IsMatch(fullName, @"^[a-zA-Z ]+$")))
+        var isValidFullNameRegex = Regex.IsMatch(fullName, @"^[a-zA-Z ]+$");
+
+        if (fullName is not null && (fullName.Trim().Count(c => !char.IsWhiteSpace(c)) < 3 || !isValidFullNameRegex))
         {
             throw new ArgumentException(
                 "Full name should contain more than 3 symbols and should not contain numbers and special symbols.");
         }
+        
+        var isValidAboutRegex = Regex.IsMatch(about, @"^[a-z0-9., ]+$");
 
-        if (about is not null && (about.Trim().Count(c => !char.IsWhiteSpace(c)) < 10 ||
-                                  !Regex.IsMatch(about, @"^[a-z0-9., ]+$")))
+        if (about is not null && (about.Trim().Count(c => !char.IsWhiteSpace(c)) < 10 || !isValidAboutRegex))
         {
             throw new ArgumentException(
                 "About should contain more than 10 symbols and should not contain special symbols.");
+        }
+    }
+
+    private async Task ValidateLoveCategoryInfo(Guid? preferableGenderId, string? relationshipGoals, int? minAge,
+        int? maxAge)
+    {
+        if (preferableGenderId is not null && !await _dataContext.Genders.AnyAsync(l => l.Id == preferableGenderId))
+        {
+            throw new ArgumentException("Invalid gender.");
+        }
+
+        var isValidRelationshipGoalsRegex = Regex.IsMatch(relationshipGoals, @"^[a-zA-Z ,.]+$");
+
+        if (relationshipGoals is not null &&
+            !(relationshipGoals.Length is >= 10 and <= 1000 && isValidRelationshipGoalsRegex))
+        {
+            throw new ArgumentException(
+                "Relationship goals should be in latin, without special signs, min 10 symbols and max 1000 symbols.");
+        }
+
+        if ((minAge is not null && maxAge is null) || (minAge is null && maxAge is not null) || minAge >= maxAge)
+        {
+            throw new ArgumentException("Invalid minAge and maxAge.");
+        }
+
+        if (minAge is < 18 or > 98)
+        {
+            throw new ArgumentException("Min age should be between 18 and 98");
+        }
+
+        if (maxAge is < 19 or > 99)
+        {
+            throw new ArgumentException("Max age should be between 19 and 99");
+        }
+    }
+
+    private void ValidateWorkCategoryInfo(string? occupation, int? income, string? skills)
+    {
+        var isValidOccupationRegex = Regex.IsMatch(occupation, @"^[a-zA-Z ,.]+$");
+
+        if (occupation is not null && !(occupation.Length is >= 3 and <= 120 && isValidOccupationRegex))
+        {
+            throw new ArgumentException(
+                "Occupation should be in latin, without special signs, min 3 symbols and max 120 symbols.");
+        }
+
+        if (income is < 1 or > 999_999_999)
+        {
+            throw new ArgumentException(
+                "Income should be between 1 and 999,999,999.");
+        }
+
+        var isValidSkillsRegex = Regex.IsMatch(skills, @"^[a-zA-Z ,.]+$");
+
+        // TODO: clarify about skills in DB
+        if (skills is not null && !(skills.Length is >= 3 and <= 120 && isValidSkillsRegex))
+        {
+            throw new ArgumentException(
+                "Skills should be in latin, without special signs, min 3 symbols and max 120 symbols.");
+        }
+    }
+
+    private void ValidateFriendsCategoryInfo(string? aboutMe)
+    {
+        var isValidRegex = Regex.IsMatch(aboutMe, @"^[a-zA-Z ,.]+$");
+
+        if (aboutMe is not null && !(aboutMe.Length is >= 10 and <= 1000 && isValidRegex))
+        {
+            throw new ArgumentException(
+                "About me should be in latin, without special signs, min 10 symbols and max 1000 symbols.");
         }
     }
 }

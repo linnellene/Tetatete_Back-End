@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TetaBackend.Features.Shared.Extentions;
+using Swashbuckle.AspNetCore.Annotations;
 using TetaBackend.Features.User.Dto;
 using TetaBackend.Features.User.Interfaces;
 
@@ -19,7 +19,7 @@ public class UserController : ControllerBase
         _jwtService = jwtService;
     }
 
-    // get: api/User - checks if has an access by JWT
+    [SwaggerOperation(Summary = "Check JWT auth access.")]
     [HttpGet]
     [Authorize]
     public ActionResult CheckAuth()
@@ -27,15 +27,15 @@ public class UserController : ControllerBase
         return Ok();
     }
 
-    // get: api/User/info - returns user info if exists
+    [SwaggerOperation(Summary = "Returns user info if exists. If not - 404.")]
     [HttpGet("info")]
     [Authorize]
     public async Task<ActionResult> GetUserInfo()
     {
-        var userId = HttpContext.GetUserIdFromJwt(_jwtService);
+        var userId = HttpContext.Items["UserId"]?.ToString()!;
         
         var userInfo = await _userService.GetUserInfo(new Guid(userId));
-        
+
         if (userInfo is null)
         {
             return NotFound("No info.");
@@ -56,7 +56,8 @@ public class UserController : ControllerBase
         return Ok(responseDto);
     }
 
-    // post: api/User/info - saves user info if not exists
+    
+    [SwaggerOperation(Summary = "Saves user info if not exists. If exists - 400")]
     [HttpPost("info")]
     [Authorize]
     public async Task<ActionResult> AddUserInfo([FromForm] FillUserInfoDto dto)
@@ -66,12 +67,7 @@ public class UserController : ControllerBase
             return BadRequest("Invalid image type.");
         }
 
-        var userId = HttpContext.GetUserIdFromJwt(_jwtService);
-
-        if (userId is null)
-        {
-            return NotFound("No auth token provided.");
-        }
+        var userId = HttpContext.Items["UserId"]?.ToString()!;
 
         var existingInfo = await _userService.GetUserInfo(new Guid(userId));
 
@@ -104,8 +100,8 @@ public class UserController : ControllerBase
         }
     }
 
-    // put: api/User/info - updates user info if exists
-    [HttpPut("info")]
+    [SwaggerOperation(Summary = "Updates user info if exists. If not - 404")]
+    [HttpPatch("info")]
     [Authorize]
     public async Task<ActionResult> UpdateUserInfo([FromForm] UpdateUserInfoDto dto)
     {
@@ -113,13 +109,8 @@ public class UserController : ControllerBase
         {
             return BadRequest("Invalid image type.");
         }
-        
-        var userId = HttpContext.GetUserIdFromJwt(_jwtService);
 
-        if (userId is null)
-        {
-            return NotFound("No auth token provided.");
-        }
+        var userId = HttpContext.Items["UserId"]?.ToString()!;
 
         var existingInfo = await _userService.GetUserInfo(new Guid(userId));
 
@@ -131,7 +122,7 @@ public class UserController : ControllerBase
         try
         {
             var newInfo = await _userService.UpdateInformation(new Guid(userId), dto);
-            
+
             var responseDto = new UserInfoDto
             {
                 About = newInfo.About,
@@ -152,7 +143,7 @@ public class UserController : ControllerBase
         }
     }
 
-    // post: api/User/register - registers new account
+    [SwaggerOperation(Summary = "Register new account.")]
     [HttpPost("register")]
     public async Task<ActionResult> RegisterUser([FromBody] AuthDto dto)
     {
@@ -170,7 +161,7 @@ public class UserController : ControllerBase
         }
     }
 
-    // post: api/User/login - returns JWT to authenticate
+    [SwaggerOperation(Summary = "Log into account with JWT as result.")]
     [HttpPost("login")]
     public async Task<ActionResult> Login([FromBody] AuthDto dto)
     {
