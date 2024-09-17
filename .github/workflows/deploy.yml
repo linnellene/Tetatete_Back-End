@@ -27,6 +27,7 @@ jobs:
       
     - name: App Settings Variable Substitution
       uses: microsoft/variable-substitution@v1
+      continue-on-error: true
       with:
         files: 'Teta/appsettings.json'
       env:
@@ -35,6 +36,10 @@ jobs:
         Amazon.S3.AccessKey: ${{ secrets.AWS_ACCESS_KEY_ID }}
         Amazon.S3.SecretKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         Amazon.S3.BucketName: 'tetatet-images'
+
+    - name: Apply EF Core Migrations
+      run: cd Teta; dotnet ef database update --no-build
+      continue-on-error: true
   
     - name: Publish prod
       run: cd Teta; dotnet restore; dotnet publish -r win-x64 --configuration "Release" --self-contained "true" -o ../site;
