@@ -10,6 +10,7 @@ namespace TetaBackend.Features.User.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class CategoryInfoController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -21,7 +22,6 @@ public class CategoryInfoController : ControllerBase
 
     [SwaggerOperation(Summary = "Returns user category info if exists. If not - 404")]
     [HttpGet]
-    [Authorize]
     public async Task<ActionResult> GetCategoryUserInfo()
     {
         var userId = HttpContext.Items["UserId"]?.ToString()!;
@@ -87,7 +87,6 @@ public class CategoryInfoController : ControllerBase
     [SwaggerOperation(Summary =
         "Creates love user category info if not exists. If exists - overwrites, if exists by the same type - 404.")]
     [HttpPost("love")]
-    [Authorize]
     public async Task<ActionResult> FillLoveUserCategoryInfo([FromBody] FillLoveCategoryInfoDto dto)
     {
         var userId = HttpContext.Items["UserId"]?.ToString()!;
@@ -129,7 +128,6 @@ public class CategoryInfoController : ControllerBase
     [SwaggerOperation(Summary =
         "Creates friends user category info if not exists. If exists - overwrites, if exists by the same type - 404.")]
     [HttpPost("friends")]
-    [Authorize]
     public async Task<ActionResult> FillFriendsUserCategoryInfo([FromBody] FillFriendsCategoryInfoDto dto)
     {
         var userId = HttpContext.Items["UserId"]?.ToString()!;
@@ -168,7 +166,6 @@ public class CategoryInfoController : ControllerBase
     [SwaggerOperation(Summary =
         "Creates work user category info if not exists. If exists - overwrites, if exists by the same type - 404.")]
     [HttpPost("work")]
-    [Authorize]
     public async Task<ActionResult> FillWorkUserCategoryInfo([FromBody] FillWorkCategoryInfoDto dto)
     {
         var userId = HttpContext.Items["UserId"]?.ToString()!;
@@ -209,7 +206,6 @@ public class CategoryInfoController : ControllerBase
     
     [SwaggerOperation(Summary = "Updates user friends category info if exists. If not - 404")]
     [HttpPatch("friends")]
-    [Authorize]
     public async Task<ActionResult> UpdateFriendsUserCategoryInfo([FromBody] UpdateFriendsCategoryInfoDto dto)
     {
         var userId = HttpContext.Items["UserId"]?.ToString()!;
@@ -235,7 +231,6 @@ public class CategoryInfoController : ControllerBase
 
     [SwaggerOperation(Summary = "Updates user love category info if exists. If not - 404")]
     [HttpPatch("love")]
-    [Authorize]
     public async Task<ActionResult> UpdateLoveUserCategoryInfo([FromBody] UpdateLoveCategoryInfoDto dto)
     {
         var userId = HttpContext.Items["UserId"]?.ToString()!;
@@ -261,7 +256,6 @@ public class CategoryInfoController : ControllerBase
 
     [SwaggerOperation(Summary = "Updates user work category info if exists. If not - 404")]
     [HttpPatch("work")]
-    [Authorize]
     public async Task<ActionResult> UpdateWorkUserCategoryInfo([FromBody] UpdateWorkCategoryInfoDto dto)
     {
         var userId = HttpContext.Items["UserId"]?.ToString()!;
