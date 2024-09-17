@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TetaBackend.Domain.Entities.Base;
 using TetaBackend.Domain.Entities;
+using TetaBackend.Domain.Entities.CategoryInfo;
 
 namespace TetaBackend.Domain;
 
@@ -17,8 +18,26 @@ public class DataContext: DbContext
     public DbSet<LocationEntity> Locations { get; set; }
     public DbSet<UserInfoLanguageEntity> UserInfoLanguages { get; set; }
     
+    public DbSet<FriendsCategoryInfoEntity> FriendsCategoryInfos { get; set; }
+    
+    public DbSet<LoveCategoryInfoEntity> LoveCategoryInfos { get; set; }
+    
+    public DbSet<WorkCategoryInfoEntity> WorkCategoryInfos { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<UserEntity>()
+            .HasOne(u => u.UserInfo)
+            .WithOne()
+            .HasForeignKey<UserEntity>(u => u.UserInfoId)
+            .IsRequired(false);
+        
+        modelBuilder.Entity<UserInfoEntity>()
+            .HasOne(f => f.User)
+            .WithOne()
+            .HasForeignKey<UserInfoEntity>(f => f.UserId)
+            .IsRequired();
+        
         modelBuilder.Entity<UserInfoEntity>()
             .HasOne(ui => ui.PlaceOfBirth)
             .WithMany(l => l.UserInfoBirthPlaces)
@@ -43,6 +62,42 @@ public class DataContext: DbContext
             .HasOne(ur => ur.UserInfo)
             .WithMany(r => r.UserInfoLanguages)
             .HasForeignKey(ur => ur.UserInfoId);
+        
+        modelBuilder.Entity<UserEntity>()
+            .HasOne(u => u.FriendsCategoryInfo)
+            .WithOne()
+            .HasForeignKey<UserEntity>(u => u.FriendsCategoryInfoId)
+            .IsRequired(false);
+        
+        modelBuilder.Entity<FriendsCategoryInfoEntity>()
+            .HasOne(f => f.User)
+            .WithOne()
+            .HasForeignKey<FriendsCategoryInfoEntity>(f => f.UserId)
+            .IsRequired();
+        
+        modelBuilder.Entity<UserEntity>()
+            .HasOne(u => u.LoveCategoryInfo)
+            .WithOne()
+            .HasForeignKey<UserEntity>(u => u.LoveCategoryInfoId)
+            .IsRequired(false);
+        
+        modelBuilder.Entity<LoveCategoryInfoEntity>()
+            .HasOne(f => f.User)
+            .WithOne()
+            .HasForeignKey<LoveCategoryInfoEntity>(f => f.UserId)
+            .IsRequired();
+        
+        modelBuilder.Entity<UserEntity>()
+            .HasOne(u => u.WorkCategoryInfo)
+            .WithOne()
+            .HasForeignKey<UserEntity>(u => u.WorkCategoryInfoId)
+            .IsRequired(false);
+        
+        modelBuilder.Entity<WorkCategoryInfoEntity>()
+            .HasOne(f => f.User)
+            .WithOne()
+            .HasForeignKey<WorkCategoryInfoEntity>(f => f.UserId)
+            .IsRequired();
         
         base.OnModelCreating(modelBuilder);
     }

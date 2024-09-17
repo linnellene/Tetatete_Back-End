@@ -22,6 +22,111 @@ namespace TetaBackend.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("TetaBackend.Domain.Entities.CategoryInfo.FriendsCategoryInfoEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Info")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("FriendsCategoryInfos");
+                });
+
+            modelBuilder.Entity("TetaBackend.Domain.Entities.CategoryInfo.LoveCategoryInfoEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("GenderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Info")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("MaxAge")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MinAge")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GenderId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("LoveCategoryInfos");
+                });
+
+            modelBuilder.Entity("TetaBackend.Domain.Entities.CategoryInfo.WorkCategoryInfoEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Income")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Info")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<int>("LookingFor")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Skills")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("WorkCategoryInfos");
+                });
+
             modelBuilder.Entity("TetaBackend.Domain.Entities.GenderEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -98,6 +203,12 @@ namespace TetaBackend.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<Guid?>("FriendsCategoryInfoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("LoveCategoryInfoId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -112,7 +223,26 @@ namespace TetaBackend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("WorkCategoryInfoId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("FriendsCategoryInfoId")
+                        .IsUnique()
+                        .HasFilter("[FriendsCategoryInfoId] IS NOT NULL");
+
+                    b.HasIndex("LoveCategoryInfoId")
+                        .IsUnique()
+                        .HasFilter("[LoveCategoryInfoId] IS NOT NULL");
+
+                    b.HasIndex("UserInfoId")
+                        .IsUnique()
+                        .HasFilter("[UserInfoId] IS NOT NULL");
+
+                    b.HasIndex("WorkCategoryInfoId")
+                        .IsUnique()
+                        .HasFilter("[WorkCategoryInfoId] IS NOT NULL");
 
                     b.ToTable("Users");
                 });
@@ -164,6 +294,9 @@ namespace TetaBackend.Migrations
 
                     b.HasIndex("PlaceOfBirthId");
 
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
                     b.ToTable("UserInfos");
                 });
 
@@ -191,6 +324,74 @@ namespace TetaBackend.Migrations
                     b.ToTable("UserInfoLanguages");
                 });
 
+            modelBuilder.Entity("TetaBackend.Domain.Entities.CategoryInfo.FriendsCategoryInfoEntity", b =>
+                {
+                    b.HasOne("TetaBackend.Domain.Entities.UserEntity", "User")
+                        .WithOne()
+                        .HasForeignKey("TetaBackend.Domain.Entities.CategoryInfo.FriendsCategoryInfoEntity", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TetaBackend.Domain.Entities.CategoryInfo.LoveCategoryInfoEntity", b =>
+                {
+                    b.HasOne("TetaBackend.Domain.Entities.GenderEntity", "Gender")
+                        .WithMany()
+                        .HasForeignKey("GenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TetaBackend.Domain.Entities.UserEntity", "User")
+                        .WithOne()
+                        .HasForeignKey("TetaBackend.Domain.Entities.CategoryInfo.LoveCategoryInfoEntity", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Gender");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TetaBackend.Domain.Entities.CategoryInfo.WorkCategoryInfoEntity", b =>
+                {
+                    b.HasOne("TetaBackend.Domain.Entities.UserEntity", "User")
+                        .WithOne()
+                        .HasForeignKey("TetaBackend.Domain.Entities.CategoryInfo.WorkCategoryInfoEntity", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TetaBackend.Domain.Entities.UserEntity", b =>
+                {
+                    b.HasOne("TetaBackend.Domain.Entities.CategoryInfo.FriendsCategoryInfoEntity", "FriendsCategoryInfo")
+                        .WithOne()
+                        .HasForeignKey("TetaBackend.Domain.Entities.UserEntity", "FriendsCategoryInfoId");
+
+                    b.HasOne("TetaBackend.Domain.Entities.CategoryInfo.LoveCategoryInfoEntity", "LoveCategoryInfo")
+                        .WithOne()
+                        .HasForeignKey("TetaBackend.Domain.Entities.UserEntity", "LoveCategoryInfoId");
+
+                    b.HasOne("TetaBackend.Domain.Entities.UserInfoEntity", "UserInfo")
+                        .WithOne()
+                        .HasForeignKey("TetaBackend.Domain.Entities.UserEntity", "UserInfoId");
+
+                    b.HasOne("TetaBackend.Domain.Entities.CategoryInfo.WorkCategoryInfoEntity", "WorkCategoryInfo")
+                        .WithOne()
+                        .HasForeignKey("TetaBackend.Domain.Entities.UserEntity", "WorkCategoryInfoId");
+
+                    b.Navigation("FriendsCategoryInfo");
+
+                    b.Navigation("LoveCategoryInfo");
+
+                    b.Navigation("UserInfo");
+
+                    b.Navigation("WorkCategoryInfo");
+                });
+
             modelBuilder.Entity("TetaBackend.Domain.Entities.UserInfoEntity", b =>
                 {
                     b.HasOne("TetaBackend.Domain.Entities.GenderEntity", "Gender")
@@ -211,11 +412,19 @@ namespace TetaBackend.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("TetaBackend.Domain.Entities.UserEntity", "User")
+                        .WithOne()
+                        .HasForeignKey("TetaBackend.Domain.Entities.UserInfoEntity", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Gender");
 
                     b.Navigation("Location");
 
                     b.Navigation("PlaceOfBirth");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("TetaBackend.Domain.Entities.UserInfoLanguageEntity", b =>

@@ -19,12 +19,16 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+builder.Services.AddCors();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Teta API", Version = "v1" });
+    c.EnableAnnotations();
     
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Teta API", Version = "v1" });
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -65,9 +69,16 @@ var app = builder.Build();
 
 // if (app.Environment.IsDevelopment())
 // {
-    app.UseSwagger();   
-    app.UseSwaggerUI();
+app.UseSwagger();
+app.UseSwaggerUI();
 // }
+
+app.UseCors(x => x
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .AllowCredentials()
+    .WithOrigins(builder.Configuration.GetSection("AllowedCorsOrigins").Get<string[]>())
+);
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
