@@ -38,7 +38,11 @@ jobs:
         Amazon.S3.BucketName: 'tetatet-images'
 
     - name: Apply EF Core Migrations
-      run: cd Teta; dotnet ef database update --no-build
+      run: |
+        cd Teta
+        dotnet tool install --global dotnet-ef
+        dotnet tool restore
+        dotnet ef database update --no-build
       continue-on-error: true
   
     - name: Publish prod
