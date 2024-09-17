@@ -20,7 +20,6 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddCors();
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -79,7 +78,6 @@ app.UseCors(x => x
     .AllowCredentials()
     .WithOrigins(builder.Configuration.GetSection("AllowedCorsOrigins").Get<string[]>())
 );
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
