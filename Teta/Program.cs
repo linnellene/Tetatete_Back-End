@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TetaBackend.Domain;
+using TetaBackend.Features.Shared.Middlewares;
 using TetaBackend.Features.User.Interfaces;
 using TetaBackend.Features.User.Services;
 
@@ -66,6 +67,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
 var app = builder.Build();
 
+app.UseMiddleware<JwtMiddleware>();
+
 // if (app.Environment.IsDevelopment())
 // {
 app.UseSwagger();
@@ -78,6 +81,7 @@ app.UseCors(x => x
     .AllowCredentials()
     .WithOrigins(builder.Configuration.GetSection("AllowedCorsOrigins").Get<string[]>())
 );
+
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
