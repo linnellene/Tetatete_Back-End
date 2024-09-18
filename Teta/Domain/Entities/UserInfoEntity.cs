@@ -12,8 +12,6 @@ public class UserInfoEntity : BaseEntity
 
     [MinLength(3)] public string FullName { get; set; }
 
-    public string ImageUrl { get; set; }
-
     public Guid UserId { get; set; }
 
     public Guid GenderId { get; set; }
@@ -31,4 +29,6 @@ public class UserInfoEntity : BaseEntity
     [ForeignKey("LocationId")] public LocationEntity Location { get; set; }
 
     public ICollection<UserInfoLanguageEntity> UserInfoLanguages { get; set; }
+    
+    public ICollection<ImageEntity> Images { get; set; }
 }

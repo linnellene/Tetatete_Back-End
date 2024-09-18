@@ -44,7 +44,7 @@ public class UserController : ControllerBase
         var responseDto = new UserInfoDto
         {
             About = userInfo.About,
-            ImageUrl = userInfo.ImageUrl,
+            ImageUrls = userInfo.Images.Select(i => i.Url).ToList(),
             Age = userInfo.Age,
             FullName = userInfo.FullName,
             GenderId = userInfo.GenderId,
@@ -62,9 +62,9 @@ public class UserController : ControllerBase
     [Authorize]
     public async Task<ActionResult> AddUserInfo([FromForm] FillUserInfoDto dto)
     {
-        if (!dto.Image.ContentType.Contains("image/"))
+        if (!dto.Images.All(f => f.ContentType.StartsWith("image/")))
         {
-            return BadRequest("Invalid image type.");
+            return BadRequest("Invalid images type.");
         }
 
         var userId = HttpContext.Items["UserId"]?.ToString()!;
@@ -83,7 +83,7 @@ public class UserController : ControllerBase
             var responseDto = new UserInfoDto
             {
                 About = info.About,
-                ImageUrl = info.ImageUrl,
+                ImageUrls = info.Images.Select(i => i.Url).ToList(),
                 Age = info.Age,
                 FullName = info.FullName,
                 GenderId = info.GenderId,
@@ -105,7 +105,7 @@ public class UserController : ControllerBase
     [Authorize]
     public async Task<ActionResult> UpdateUserInfo([FromForm] UpdateUserInfoDto dto)
     {
-        if (dto.Image is not null && !dto.Image.ContentType.Contains("image/"))
+        if (dto.Images is not null && !dto.Images.All(f => f.ContentType.StartsWith("image/")))
         {
             return BadRequest("Invalid image type.");
         }
@@ -126,7 +126,7 @@ public class UserController : ControllerBase
             var responseDto = new UserInfoDto
             {
                 About = newInfo.About,
-                ImageUrl = newInfo.ImageUrl,
+                ImageUrls = newInfo.Images.Select(i => i.Url).ToList(),
                 Age = newInfo.Age,
                 FullName = newInfo.FullName,
                 GenderId = newInfo.GenderId,
