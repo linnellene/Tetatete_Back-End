@@ -7,11 +7,9 @@ namespace TetaBackend.Features.User.Interfaces;
 
 public interface IUserService
 {
-    Task<bool> CreateUser(string username, string password);
+    Task CreateUser(string email, string phone, string password);
 
-    Task ValidateRegisterParameters(string username, string password, bool logIn = false);
-
-    Task<UserEntity?> Authenticate(string username, string password);
+    Task<UserEntity?> Authenticate(string password, string? email, string? phone);
 
     Task<UserInfoEntity?> GetUserInfo(Guid userId);
 

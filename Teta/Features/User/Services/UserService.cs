@@ -25,52 +25,39 @@ public class UserService : IUserService
         _imageService = imageService;
     }
 
-    public async Task<bool> CreateUser(string username, string password)
+    public async Task CreateUser(string email, string phone, string password)
     {
-        try
+        await ValidateAuthParameters(email, phone, password);
+
+        var hashedPassword = PasswordHasher.HashPassword(password);
+
+        var user = new UserEntity
         {
-            var hashedPassword = PasswordHasher.HashPassword(password);
+            Email = email,
+            Phone = phone,
+            Password = hashedPassword
+        };
 
-            var user = new UserEntity
-            {
-                Username = username,
-                Password = hashedPassword
-            };
-
-            await _dataContext.Users.AddAsync(user);
-            await _dataContext.SaveChangesAsync();
-
-            return true;
-        }
-        catch (Exception e)
-        {
-            _logger.LogInformation($"User creation failed, error: {e.Message}");
-
-            return false;
-        }
+        await _dataContext.Users.AddAsync(user);
+        await _dataContext.SaveChangesAsync();
     }
 
-    public async Task ValidateRegisterParameters(string username, string password, bool logIn = false)
+    public async Task<UserEntity?> Authenticate(string password, string? email, string? phone)
     {
-        if (!Regex.IsMatch(username, @"^[a-z0-9]+$"))
+        if (email is null && phone is null)
         {
-            throw new ArgumentException("Username must be in latin, in lower case, without spaces and special signs.");
+            throw new ArgumentException("Email and phone cannot be null at the same time.");
         }
 
-        if (!Regex.IsMatch(password, @"^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':""\\|,.<>\/?]+$"))
+        if (email is not null && phone is not null)
         {
-            throw new ArgumentException("Password must be in latin, without spaces.");
+            throw new ArgumentException("Email and phone cannot be non-nullable at the same time.");
         }
 
-        if (!logIn && await _dataContext.Users.AnyAsync(u => u.Username == username))
-        {
-            throw new ArgumentException("Username already exists");
-        }
-    }
+        await ValidateAuthParameters(email, phone, password, true);
 
-    public async Task<UserEntity?> Authenticate(string username, string password)
-    {
-        var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Username == username);
+        var user = await _dataContext.Users.FirstOrDefaultAsync(
+            u => phone == null ? u.Email == email : u.Phone == phone);
 
         if (user is null)
         {
@@ -164,7 +151,7 @@ public class UserService : IUserService
 
         return userInfo;
     }
-    
+
     public async Task<CategoryType?> GetFulfilledInfoType(Guid userId)
     {
         var user = await _dataContext.Users.Include(u => u.FriendsCategoryInfo).Include(u => u.LoveCategoryInfo)
@@ -398,7 +385,7 @@ public class UserService : IUserService
             throw new ArgumentException(
                 "Full name should contain more than 3 symbols and should not contain numbers and special symbols.");
         }
-        
+
         var isValidAboutRegex = Regex.IsMatch(about, @"^[a-z0-9., ]+$");
 
         if (about is not null && (about.Trim().Count(c => !char.IsWhiteSpace(c)) < 10 || !isValidAboutRegex))
@@ -475,6 +462,35 @@ public class UserService : IUserService
         {
             throw new ArgumentException(
                 "About me should be in latin, without special signs, min 10 symbols and max 1000 symbols.");
+        }
+    }
+
+
+    private async Task ValidateAuthParameters(string? email, string? phone, string password, bool logIn = false)
+    {
+        if (email is not null && !Regex.IsMatch(email, @"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"))
+        {
+            throw new ArgumentException("Invalid email.");
+        }
+
+        if (phone is not null && !Regex.IsMatch(phone, @"^\+1-\d{3}-\d{3}-\d{4}$"))
+        {
+            throw new ArgumentException("Invalid phone.");
+        }
+
+        if (!Regex.IsMatch(password, @"^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':""\\|,.<>\/?]+$"))
+        {
+            throw new ArgumentException("Password must be in latin, without spaces.");
+        }
+
+        if (!logIn && email is not null && await _dataContext.Users.AnyAsync(u => u.Email == email))
+        {
+            throw new ArgumentException("Email already exists");
+        }
+
+        if (!logIn && phone is not null && await _dataContext.Users.AnyAsync(u => u.Phone == phone))
+        {
+            throw new ArgumentException("Phone already exists");
         }
     }
 }

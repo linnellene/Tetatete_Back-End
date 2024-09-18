@@ -33,7 +33,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult> GetUserInfo()
     {
         var userId = HttpContext.Items["UserId"]?.ToString()!;
-        
+
         var userInfo = await _userService.GetUserInfo(new Guid(userId));
 
         if (userInfo is null)
@@ -56,7 +56,7 @@ public class UserController : ControllerBase
         return Ok(responseDto);
     }
 
-    
+
     [SwaggerOperation(Summary = "Saves user info if not exists. If exists - 400")]
     [HttpPost("info")]
     [Authorize]
@@ -145,15 +145,13 @@ public class UserController : ControllerBase
 
     [SwaggerOperation(Summary = "Register new account.")]
     [HttpPost("register")]
-    public async Task<ActionResult> RegisterUser([FromBody] AuthDto dto)
+    public async Task<ActionResult> RegisterUser([FromBody] RegisterDto dto)
     {
         try
         {
-            await _userService.ValidateRegisterParameters(dto.Username, dto.Password);
+            await _userService.CreateUser(dto.Email, dto.Phone, dto.Password);
 
-            var isSaved = await _userService.CreateUser(dto.Username, dto.Password);
-
-            return isSaved ? Created() : BadRequest("Unexpected error.");
+            return Created();
         }
         catch (Exception e)
         {
@@ -163,13 +161,11 @@ public class UserController : ControllerBase
 
     [SwaggerOperation(Summary = "Log into account with JWT as result.")]
     [HttpPost("login")]
-    public async Task<ActionResult> Login([FromBody] AuthDto dto)
+    public async Task<ActionResult> Login([FromBody] LoginDto dto)
     {
         try
         {
-            await _userService.ValidateRegisterParameters(dto.Username, dto.Password, true);
-
-            var authUser = await _userService.Authenticate(dto.Username, dto.Password);
+            var authUser = await _userService.Authenticate(dto.Password, dto.Email, dto.Phone);
 
             if (authUser is null)
             {
