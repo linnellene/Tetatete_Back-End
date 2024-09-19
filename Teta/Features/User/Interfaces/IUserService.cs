@@ -7,6 +7,12 @@ namespace TetaBackend.Features.User.Interfaces;
 
 public interface IUserService
 {
+    Task<IEnumerable<GenderEntity>> GetAllGenders();
+    
+    Task<IEnumerable<LocationEntity>> GetAllLocations();
+        
+    Task<IEnumerable<LanguageEntity>> GetAllLanguages();
+    
     Task CreateUser(string email, string phone, string password);
 
     Task<UserEntity?> Authenticate(string password, string? email, string? phone);

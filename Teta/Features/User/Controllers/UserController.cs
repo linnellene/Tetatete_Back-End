@@ -26,6 +26,49 @@ public class UserController : ControllerBase
     {
         return Ok();
     }
+    
+    [SwaggerOperation(Summary = "Gets all genders.")]
+    [HttpGet("genders")]
+    [Authorize]
+    public async Task<ActionResult> GetGenders()
+    {
+        var genders = await _userService.GetAllGenders();
+
+        return Ok(genders.Select(g => new GenderDto
+        {
+            Id = g.Id,
+            Name = g.Name,
+        }));
+    } 
+    
+    [SwaggerOperation(Summary = "Gets all locations.")]
+    [HttpGet("locations")]
+    [Authorize]
+    public async Task<ActionResult> GetLocations()
+    {
+        var locations = await _userService.GetAllLocations();
+
+        return Ok(locations.Select(l => new LocationDto
+        {
+            Id = l.Id,
+            City = l.City,
+            Country = l.Country
+        }));
+    } 
+    
+    [SwaggerOperation(Summary = "Gets all languages.")]
+    [HttpGet("languages")]
+    [Authorize]
+    public async Task<ActionResult> GetLanguages()
+    {
+        var languages = await _userService.GetAllLanguages();
+
+        return Ok(languages.Select(l => new LanguageDto
+        {
+            Id = l.Id,
+            Name = l.Name
+        }));
+    } 
 
     [SwaggerOperation(Summary = "Returns user info if exists. If not - 404.")]
     [HttpGet("info")]

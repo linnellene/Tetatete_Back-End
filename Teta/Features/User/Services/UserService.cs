@@ -15,14 +15,27 @@ namespace TetaBackend.Features.User.Services;
 public class UserService : IUserService
 {
     private readonly DataContext _dataContext;
-    private readonly ILogger _logger;
     private readonly IImageService _imageService;
 
-    public UserService(DataContext dataContext, ILogger<UserService> logger, IImageService imageService)
+    public UserService(DataContext dataContext, IImageService imageService)
     {
         _dataContext = dataContext;
-        _logger = logger;
         _imageService = imageService;
+    }
+
+    public async Task<IEnumerable<GenderEntity>> GetAllGenders()
+    {
+        return await _dataContext.Genders.ToListAsync();
+    }
+
+    public async Task<IEnumerable<LocationEntity>> GetAllLocations()
+    {
+        return await _dataContext.Locations.ToListAsync();
+    }
+
+    public async Task<IEnumerable<LanguageEntity>> GetAllLanguages()
+    {
+        return await _dataContext.Languages.ToListAsync();
     }
 
     public async Task CreateUser(string email, string phone, string password)
