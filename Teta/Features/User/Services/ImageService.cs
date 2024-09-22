@@ -11,6 +11,7 @@ public class ImageService : IImageService
 {
     private readonly IAmazonS3 _amazonS3Client;
     private readonly string _bucketName;
+    private const int MaxImagesCount = 6;
 
     public ImageService(IConfiguration configuration)
     {
@@ -29,33 +30,45 @@ public class ImageService : IImageService
         _bucketName = bucketName;
     }
 
-    public async Task<string> UploadImage(IFormFile image)
+    public async Task<List<string>> UploadImage(List<IFormFile> images)
     {
-        if (image.Length == 0)
+        if (images.Count is 0 or > MaxImagesCount)
         {
-            throw new InvalidDataException("No image was provided.");
+            throw new InvalidDataException("Min images count is 0 and max count is 6.");
         }
 
-        var keyName = Guid.NewGuid() + Path.GetExtension(image.FileName);
+        var result = new List<string>();
 
-        await using var stream = image.OpenReadStream();
-
-        var request = new PutObjectRequest
+        foreach (var image in images)
         {
-            BucketName = _bucketName,
-            Key = keyName,
-            InputStream = stream,
-            ContentType = image.ContentType,
-            CannedACL = S3CannedACL.PublicRead,
-        };
+            if (image.Length == 0)
+            {
+                throw new InvalidDataException("No image was provided.");
+            }
 
-        var response = await _amazonS3Client.PutObjectAsync(request);
+            var keyName = Guid.NewGuid() + Path.GetExtension(image.FileName);
 
-        if (response.HttpStatusCode != HttpStatusCode.OK)
-        {
-            throw new Exception("Error uploading image to S3.");
+            await using var stream = image.OpenReadStream();
+
+            var request = new PutObjectRequest
+            {
+                BucketName = _bucketName,
+                Key = keyName,
+                InputStream = stream,
+                ContentType = image.ContentType,
+                CannedACL = S3CannedACL.PublicRead,
+            };
+
+            var response = await _amazonS3Client.PutObjectAsync(request);
+
+            if (response.HttpStatusCode != HttpStatusCode.OK)
+            {
+                throw new Exception("Error uploading image to S3.");
+            }
+
+            result.Add($"https://{_bucketName}.s3.amazonaws.com/{keyName}");
         }
 
-        return $"https://{_bucketName}.s3.amazonaws.com/{keyName}";
+        return result;
     }
 }

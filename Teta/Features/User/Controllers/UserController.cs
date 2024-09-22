@@ -26,6 +26,49 @@ public class UserController : ControllerBase
     {
         return Ok();
     }
+    
+    [SwaggerOperation(Summary = "Gets all genders.")]
+    [HttpGet("genders")]
+    [Authorize]
+    public async Task<ActionResult> GetGenders()
+    {
+        var genders = await _userService.GetAllGenders();
+
+        return Ok(genders.Select(g => new GenderDto
+        {
+            Id = g.Id,
+            Name = g.Name,
+        }));
+    } 
+    
+    [SwaggerOperation(Summary = "Gets all locations.")]
+    [HttpGet("locations")]
+    [Authorize]
+    public async Task<ActionResult> GetLocations()
+    {
+        var locations = await _userService.GetAllLocations();
+
+        return Ok(locations.Select(l => new LocationDto
+        {
+            Id = l.Id,
+            City = l.City,
+            Country = l.Country
+        }));
+    } 
+    
+    [SwaggerOperation(Summary = "Gets all languages.")]
+    [HttpGet("languages")]
+    [Authorize]
+    public async Task<ActionResult> GetLanguages()
+    {
+        var languages = await _userService.GetAllLanguages();
+
+        return Ok(languages.Select(l => new LanguageDto
+        {
+            Id = l.Id,
+            Name = l.Name
+        }));
+    } 
 
     [SwaggerOperation(Summary = "Returns user info if exists. If not - 404.")]
     [HttpGet("info")]
@@ -44,7 +87,7 @@ public class UserController : ControllerBase
         var responseDto = new UserInfoDto
         {
             About = userInfo.About,
-            ImageUrl = userInfo.ImageUrl,
+            ImageUrls = userInfo.Images.Select(i => i.Url).ToList(),
             Age = userInfo.Age,
             FullName = userInfo.FullName,
             GenderId = userInfo.GenderId,
@@ -62,9 +105,9 @@ public class UserController : ControllerBase
     [Authorize]
     public async Task<ActionResult> AddUserInfo([FromForm] FillUserInfoDto dto)
     {
-        if (!dto.Image.ContentType.Contains("image/"))
+        if (!dto.Images.All(f => f.ContentType.StartsWith("image/")))
         {
-            return BadRequest("Invalid image type.");
+            return BadRequest("Invalid images type.");
         }
 
         var userId = HttpContext.Items["UserId"]?.ToString()!;
@@ -83,7 +126,7 @@ public class UserController : ControllerBase
             var responseDto = new UserInfoDto
             {
                 About = info.About,
-                ImageUrl = info.ImageUrl,
+                ImageUrls = info.Images.Select(i => i.Url).ToList(),
                 Age = info.Age,
                 FullName = info.FullName,
                 GenderId = info.GenderId,
@@ -105,7 +148,7 @@ public class UserController : ControllerBase
     [Authorize]
     public async Task<ActionResult> UpdateUserInfo([FromForm] UpdateUserInfoDto dto)
     {
-        if (dto.Image is not null && !dto.Image.ContentType.Contains("image/"))
+        if (dto.Images is not null && !dto.Images.All(f => f.ContentType.StartsWith("image/")))
         {
             return BadRequest("Invalid image type.");
         }
@@ -126,7 +169,7 @@ public class UserController : ControllerBase
             var responseDto = new UserInfoDto
             {
                 About = newInfo.About,
-                ImageUrl = newInfo.ImageUrl,
+                ImageUrls = newInfo.Images.Select(i => i.Url).ToList(),
                 Age = newInfo.Age,
                 FullName = newInfo.FullName,
                 GenderId = newInfo.GenderId,

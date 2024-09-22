@@ -15,14 +15,27 @@ namespace TetaBackend.Features.User.Services;
 public class UserService : IUserService
 {
     private readonly DataContext _dataContext;
-    private readonly ILogger _logger;
     private readonly IImageService _imageService;
 
-    public UserService(DataContext dataContext, ILogger<UserService> logger, IImageService imageService)
+    public UserService(DataContext dataContext, IImageService imageService)
     {
         _dataContext = dataContext;
-        _logger = logger;
         _imageService = imageService;
+    }
+
+    public async Task<IEnumerable<GenderEntity>> GetAllGenders()
+    {
+        return await _dataContext.Genders.ToListAsync();
+    }
+
+    public async Task<IEnumerable<LocationEntity>> GetAllLocations()
+    {
+        return await _dataContext.Locations.ToListAsync();
+    }
+
+    public async Task<IEnumerable<LanguageEntity>> GetAllLanguages()
+    {
+        return await _dataContext.Languages.ToListAsync();
     }
 
     public async Task CreateUser(string email, string phone, string password)
@@ -71,12 +84,13 @@ public class UserService : IUserService
     {
         return _dataContext.UserInfos
             .Include(u => u.UserInfoLanguages)
+            .Include(u => u.Images)
             .FirstOrDefaultAsync(u => u.UserId == userId);
     }
 
     public async Task<UserInfoEntity> FillInformation(Guid userId, FillUserInfoDto dto)
     {
-        var imageUrl = await _imageService.UploadImage(dto.Image);
+        var imageUrl = await _imageService.UploadImage(dto.Images);
 
         await ValidateUserInfo(dto.PlaceOfBirthId, dto.LocationId, dto.GenderId, dto.Languages, dto.FullName,
             dto.About, dto.Age);
@@ -90,10 +104,17 @@ public class UserService : IUserService
             FullName = dto.FullName.Trim(),
             Age = dto.Age,
             GenderId = dto.GenderId,
-            ImageUrl = imageUrl,
         };
 
         var userInfoEntity = await _dataContext.UserInfos.AddAsync(userInfo);
+
+        var imagesToSave = imageUrl.Select(i => new ImageEntity
+        {
+            UserInfoId = userInfoEntity.Entity.Id,
+            Url = i
+        });
+
+        await _dataContext.Images.AddRangeAsync(imagesToSave);
 
         foreach (var languageId in dto.Languages)
         {
@@ -122,11 +143,19 @@ public class UserService : IUserService
             throw new ArgumentException("Invalid user id");
         }
 
-        if (dto.Image is not null)
+        if (dto.Images is not null)
         {
-            var imageUrl = await _imageService.UploadImage(dto.Image);
+            userInfo.Images = new List<ImageEntity>();
+            
+            var imageUrl = await _imageService.UploadImage(dto.Images);
 
-            userInfo.ImageUrl = imageUrl;
+            var imagesToSave = imageUrl.Select(i => new ImageEntity
+            {
+                UserInfoId = userInfo.Id,
+                Url = i
+            });
+
+            await _dataContext.Images.AddRangeAsync(imagesToSave);
         }
 
         userInfo.PlaceOfBirthId = dto.PlaceOfBirthId ?? userInfo.PlaceOfBirthId;
@@ -378,7 +407,7 @@ public class UserService : IUserService
             throw new ArgumentException("Invalid languages.");
         }
 
-        var isValidFullNameRegex = Regex.IsMatch(fullName, @"^[a-zA-Z ]+$");
+        var isValidFullNameRegex = Regex.IsMatch(fullName ?? "", @"^[a-zA-Z ]+$");
 
         if (fullName is not null && (fullName.Trim().Count(c => !char.IsWhiteSpace(c)) < 3 || !isValidFullNameRegex))
         {
@@ -386,7 +415,7 @@ public class UserService : IUserService
                 "Full name should contain more than 3 symbols and should not contain numbers and special symbols.");
         }
 
-        var isValidAboutRegex = Regex.IsMatch(about, @"^[a-z0-9., ]+$");
+        var isValidAboutRegex = Regex.IsMatch(about ?? "", @"^[a-z0-9., ]+$");
 
         if (about is not null && (about.Trim().Count(c => !char.IsWhiteSpace(c)) < 10 || !isValidAboutRegex))
         {
@@ -403,7 +432,7 @@ public class UserService : IUserService
             throw new ArgumentException("Invalid gender.");
         }
 
-        var isValidRelationshipGoalsRegex = Regex.IsMatch(relationshipGoals, @"^[a-zA-Z ,.]+$");
+        var isValidRelationshipGoalsRegex = Regex.IsMatch(relationshipGoals ?? "", @"^[a-zA-Z ,.]+$");
 
         if (relationshipGoals is not null &&
             !(relationshipGoals.Length is >= 10 and <= 1000 && isValidRelationshipGoalsRegex))
@@ -430,7 +459,7 @@ public class UserService : IUserService
 
     private void ValidateWorkCategoryInfo(string? occupation, int? income, string? skills)
     {
-        var isValidOccupationRegex = Regex.IsMatch(occupation, @"^[a-zA-Z ,.]+$");
+        var isValidOccupationRegex = Regex.IsMatch(occupation ?? "", @"^[a-zA-Z ,.]+$");
 
         if (occupation is not null && !(occupation.Length is >= 3 and <= 120 && isValidOccupationRegex))
         {
@@ -444,7 +473,7 @@ public class UserService : IUserService
                 "Income should be between 1 and 999,999,999.");
         }
 
-        var isValidSkillsRegex = Regex.IsMatch(skills, @"^[a-zA-Z ,.]+$");
+        var isValidSkillsRegex = Regex.IsMatch(skills ?? "", @"^[a-zA-Z ,.]+$");
 
         // TODO: clarify about skills in DB
         if (skills is not null && !(skills.Length is >= 3 and <= 120 && isValidSkillsRegex))
@@ -456,7 +485,7 @@ public class UserService : IUserService
 
     private void ValidateFriendsCategoryInfo(string? aboutMe)
     {
-        var isValidRegex = Regex.IsMatch(aboutMe, @"^[a-zA-Z ,.]+$");
+        var isValidRegex = Regex.IsMatch(aboutMe ?? "", @"^[a-zA-Z ,.]+$");
 
         if (aboutMe is not null && !(aboutMe.Length is >= 10 and <= 1000 && isValidRegex))
         {

@@ -8,7 +8,7 @@ public class FillUserInfoDto
     
     public string FullName { get; set; }
     
-    public IFormFile Image { get; set; }
+    public List<IFormFile> Images { get; set; }
     
     public Guid GenderId { get; set;}
     

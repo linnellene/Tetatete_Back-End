@@ -12,10 +12,17 @@ public class DataContext: DbContext
     }
     
     public DbSet<UserEntity> Users { get; set; }
+    
     public DbSet<UserInfoEntity> UserInfos { get; set; }
+    
+    public DbSet<ImageEntity> Images { get; set; }
+    
     public DbSet<GenderEntity> Genders { get; set; }
+    
     public DbSet<LanguageEntity> Languages { get; set; }
+    
     public DbSet<LocationEntity> Locations { get; set; }
+    
     public DbSet<UserInfoLanguageEntity> UserInfoLanguages { get; set; }
     
     public DbSet<FriendsCategoryInfoEntity> FriendsCategoryInfos { get; set; }
