@@ -36,6 +36,11 @@ jobs:
         Amazon.S3.AccessKey: ${{ secrets.AWS_ACCESS_KEY_ID }}
         Amazon.S3.SecretKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         Amazon.S3.BucketName: 'tetatet-images'
+        Stripe.SecretKey: ${{ secrets.STRIPE_SECRET_KEY }}
+        Stripe.PublishableKey: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+        Stripe.WebHookSecret: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+        Stripe.SuccessUrl: 'https://tete-a-tete.network/success'
+        Stripe.CancelUrl: 'https://tete-a-tete.network/cancel'
 
     - name: Apply EF Core Migrations
       run: |
