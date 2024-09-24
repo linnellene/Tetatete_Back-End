@@ -229,9 +229,6 @@ namespace TetaBackend.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("CustomerId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -239,7 +236,7 @@ namespace TetaBackend.Migrations
                     b.Property<Guid?>("FriendsCategoryInfoId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("IsPaidSubscription")
+                    b.Property<bool>("IsStripeSubscriptionPaid")
                         .HasColumnType("bit");
 
                     b.Property<Guid?>("LoveCategoryInfoId")
@@ -253,10 +250,13 @@ namespace TetaBackend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTimeOffset?>("SubscriptionExpiresAt")
+                    b.Property<string>("StripeCustomerId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("StripeSubscriptionExpiresAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("SubscriptionId")
+                    b.Property<string>("StripeSubscriptionId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")

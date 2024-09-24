@@ -11,13 +11,13 @@ public class UserEntity : BaseEntity
 
     public string Password { get; set; }
     
-    public string? CustomerId { get; set; }
+    public string? StripeCustomerId { get; set; }
     
-    public string? SubscriptionId  { get; set; }
+    public string? StripeSubscriptionId  { get; set; }
     
-    public DateTimeOffset? SubscriptionExpiresAt  { get; set; }
+    public DateTimeOffset? StripeSubscriptionExpiresAt  { get; set; }
     
-    public bool IsPaidSubscription { get; set; } = false;
+    public bool IsStripeSubscriptionPaid { get; set; } = false;
 
     public Guid? UserInfoId { get; set; }
 

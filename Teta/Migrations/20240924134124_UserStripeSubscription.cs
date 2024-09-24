@@ -6,32 +6,32 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TetaBackend.Migrations
 {
     /// <inheritdoc />
-    public partial class UserSubscription : Migration
+    public partial class UserStripeSubscription : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "CustomerId",
-                table: "Users",
-                type: "nvarchar(max)",
-                nullable: true);
-
             migrationBuilder.AddColumn<bool>(
-                name: "IsPaidSubscription",
+                name: "IsStripeSubscriptionPaid",
                 table: "Users",
                 type: "bit",
                 nullable: false,
                 defaultValue: false);
 
+            migrationBuilder.AddColumn<string>(
+                name: "StripeCustomerId",
+                table: "Users",
+                type: "nvarchar(max)",
+                nullable: true);
+
             migrationBuilder.AddColumn<DateTimeOffset>(
-                name: "SubscriptionExpiresAt",
+                name: "StripeSubscriptionExpiresAt",
                 table: "Users",
                 type: "datetimeoffset",
                 nullable: true);
 
             migrationBuilder.AddColumn<string>(
-                name: "SubscriptionId",
+                name: "StripeSubscriptionId",
                 table: "Users",
                 type: "nvarchar(max)",
                 nullable: true);
@@ -41,19 +41,19 @@ namespace TetaBackend.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "CustomerId",
+                name: "IsStripeSubscriptionPaid",
                 table: "Users");
 
             migrationBuilder.DropColumn(
-                name: "IsPaidSubscription",
+                name: "StripeCustomerId",
                 table: "Users");
 
             migrationBuilder.DropColumn(
-                name: "SubscriptionExpiresAt",
+                name: "StripeSubscriptionExpiresAt",
                 table: "Users");
 
             migrationBuilder.DropColumn(
-                name: "SubscriptionId",
+                name: "StripeSubscriptionId",
                 table: "Users");
         }
     }

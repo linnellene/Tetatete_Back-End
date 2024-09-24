@@ -45,7 +45,7 @@ public class StripeService : IStripeService
             throw new ArgumentException("Invalid user id.");
         }
 
-        return user.IsPaidSubscription;
+        return user.IsStripeSubscriptionPaid;
     }
 
     public async Task<string> CreateCheckoutSession(Guid userId, string priceId)
@@ -57,19 +57,19 @@ public class StripeService : IStripeService
             throw new ArgumentException("Invalid user id.");
         }
 
-        if (user.IsPaidSubscription)
+        if (user.IsStripeSubscriptionPaid)
         {
             throw new ArgumentException("Already paid.");
         }
 
-        if (user.CustomerId is null)
+        if (user.StripeCustomerId is null)
         {
             await CreateCustomerForUser(user);
         }
 
         var sessionOptions = new SessionCreateOptions
         {
-            Customer = user.CustomerId,
+            Customer = user.StripeCustomerId,
             PaymentMethodTypes = _paymentMethods,
             Mode = "subscription",
             LineItems =
@@ -92,16 +92,16 @@ public class StripeService : IStripeService
     public async Task UpdateSubscriptionStatusForUser(string customerId, bool status, string? subscriptionId, DateTimeOffset? expiresAt)
     {
         var user = await _dataContext.Users.FirstOrDefaultAsync(u =>
-            u.CustomerId == customerId);
+            u.StripeCustomerId == customerId);
 
         if (user is null)
         {
             throw new ArgumentException("Invalid customer id.");
         }
 
-        user.IsPaidSubscription = status;
-        user.SubscriptionExpiresAt = expiresAt;
-        user.SubscriptionId = subscriptionId;
+        user.IsStripeSubscriptionPaid = status;
+        user.StripeSubscriptionExpiresAt = expiresAt;
+        user.StripeSubscriptionId = subscriptionId;
 
         await _dataContext.SaveChangesAsync();
     }
@@ -119,23 +119,21 @@ public class StripeService : IStripeService
         var options = new SubscriptionCancelOptions
         {
             InvoiceNow = false,
-            // TODO: clarify
-            // Prorate = true 
         };
 
         var subscriptionService = new SubscriptionService();
         
-        await subscriptionService.CancelAsync(user.SubscriptionId, options);
+        await subscriptionService.CancelAsync(user.StripeSubscriptionId, options);
 
-        user.SubscriptionId = null;
-        user.SubscriptionExpiresAt = null;
+        user.StripeSubscriptionId = null;
+        user.StripeSubscriptionExpiresAt = null;
 
         await _dataContext.SaveChangesAsync();
     }
 
     private async Task CreateCustomerForUser(UserEntity user)
     {
-        if (user.CustomerId is not null)
+        if (user.StripeCustomerId is not null)
         {
             throw new ArgumentException("Customer already exists");
         }
@@ -147,7 +145,7 @@ public class StripeService : IStripeService
 
         var customer = await _customerService.CreateAsync(customerOptions);
 
-        user.CustomerId = customer.Id;
+        user.StripeCustomerId = customer.Id;
 
         await _dataContext.SaveChangesAsync();
     }
