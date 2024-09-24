@@ -10,6 +10,14 @@ public class UserEntity : BaseEntity
     public string Phone { get; set; }
 
     public string Password { get; set; }
+    
+    public string? StripeCustomerId { get; set; }
+    
+    public string? StripeSubscriptionId  { get; set; }
+    
+    public DateTimeOffset? StripeSubscriptionExpiresAt  { get; set; }
+    
+    public bool IsStripeSubscriptionPaid { get; set; } = false;
 
     public Guid? UserInfoId { get; set; }
 
