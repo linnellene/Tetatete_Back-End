@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Stripe;
 using TetaBackend.Domain;
 using TetaBackend.Features.Shared.Middlewares;
 using TetaBackend.Features.User.Interfaces;
@@ -19,6 +20,10 @@ builder.Services.AddDbContext<DataContext>(options =>
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IStripeService, StripeService>();
+
+StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+
 
 builder.Services.AddCors();
 builder.Services.AddControllers();

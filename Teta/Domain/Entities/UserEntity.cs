@@ -10,6 +10,14 @@ public class UserEntity : BaseEntity
     public string Phone { get; set; }
 
     public string Password { get; set; }
+    
+    public string? CustomerId { get; set; }
+    
+    public string? SubscriptionId  { get; set; }
+    
+    public DateTimeOffset? SubscriptionExpiresAt  { get; set; }
+    
+    public bool IsPaidSubscription { get; set; } = false;
 
     public Guid? UserInfoId { get; set; }
 
