@@ -16,11 +16,21 @@ public class UserService : IUserService
 {
     private readonly DataContext _dataContext;
     private readonly IImageService _imageService;
+    private readonly IEmailService _emailService;
+    private readonly IJwtService _jwtService;
+    private readonly string _emaiLRedirectUrl;
 
-    public UserService(DataContext dataContext, IImageService imageService)
+    public UserService(DataContext dataContext, IImageService imageService, IEmailService emailService,
+        IConfiguration configuration, IJwtService jwtService)
     {
         _dataContext = dataContext;
         _imageService = imageService;
+        _emailService = emailService;
+        _jwtService = jwtService;
+
+        var redirectUrl = configuration.GetSection("EmailRestoreLink").Value;
+
+        _emaiLRedirectUrl = redirectUrl ?? throw new ArgumentException("Invalid email restore link");
     }
 
     public async Task<IEnumerable<GenderEntity>> GetAllGenders()
@@ -146,7 +156,7 @@ public class UserService : IUserService
         if (dto.Images is not null)
         {
             userInfo.Images = new List<ImageEntity>();
-            
+
             var imageUrl = await _imageService.UploadImage(dto.Images);
 
             var imagesToSave = imageUrl.Select(i => new ImageEntity
@@ -374,6 +384,41 @@ public class UserService : IUserService
                 break;
             }
         }
+
+        await _dataContext.SaveChangesAsync();
+    }
+
+    public async Task SendForgotPasswordEmail(string email)
+    {
+        var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user is null)
+        {
+            throw new ArgumentException("Invalid email.");
+        }
+
+        var token =  _jwtService.GenerateToken(user.Id);
+        var link = _emaiLRedirectUrl + "?token=" + token;
+
+        var message = $"Tetatet App. Link to restore password: {link}";
+
+        await _emailService.SendEmail(user.Email, message);
+    }
+
+    public async Task UpdatePassword(Guid userId, string password)
+    {
+        var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user is null)
+        {
+            throw new ArgumentException("Invalid user id.");
+        }
+        
+        await ValidateAuthParameters(null, null, password);
+
+        var hashedPassword = PasswordHasher.HashPassword(password);
+
+        user.Password = hashedPassword;
 
         await _dataContext.SaveChangesAsync();
     }
