@@ -135,6 +135,10 @@ public class UserService : IUserService
             });
         }
 
+        var user = (await _dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId))!;
+
+        user.UserInfoId = userInfoEntity.Entity.Id;
+
         await _dataContext.SaveChangesAsync();
 
         return userInfoEntity.Entity;

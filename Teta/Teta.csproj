@@ -29,4 +29,8 @@
         <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.7.3" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Features\Match\Controllers\" />
+    </ItemGroup>
+
 </Project>

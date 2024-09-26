@@ -5,6 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Stripe;
 using TetaBackend.Domain;
+using TetaBackend.Features.Match.Interfaces;
+using TetaBackend.Features.Match.Services;
 using TetaBackend.Features.Shared.Middlewares;
 using TetaBackend.Features.User.Interfaces;
 using TetaBackend.Features.User.Services;
@@ -22,6 +24,7 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStripeService, StripeService>();
+builder.Services.AddScoped<IMatchService, MatchService>();
 
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 

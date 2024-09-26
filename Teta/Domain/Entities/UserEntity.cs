@@ -34,4 +34,8 @@ public class UserEntity : BaseEntity
     public FriendsCategoryInfoEntity? FriendsCategoryInfo { get; set; }
 
     public WorkCategoryInfoEntity? WorkCategoryInfo { get; set; }
+    
+    public ICollection<MatchEntity> InitiatedMatches { get; set; }
+    
+    public ICollection<MatchEntity> ReceivedMatches { get; set; }
 }
