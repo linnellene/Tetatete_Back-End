@@ -202,7 +202,7 @@ public class UserController : ControllerBase
         }
     }
     
-    [SwaggerOperation(Summary = "Send email to a specified email with new password to log in.")]
+    [SwaggerOperation(Summary = "Send email to a specified email token to update password.")]
     [HttpPost("forgotPassword")]
     public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
     {
