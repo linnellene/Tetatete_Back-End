@@ -126,6 +126,11 @@ public class MatchService : IMatchService
         {
             throw new ArgumentException("No matches with this user.");
         }
+        
+        if (match.IsMatch)
+        {
+            throw new ArgumentException("Already liked.");
+        }
 
         match.IsMatch = true;
 
@@ -140,6 +145,11 @@ public class MatchService : IMatchService
         if (match is null)
         {
             throw new ArgumentException("No matches with this user.");
+        }
+        
+        if (match.IsMatch)
+        {
+            throw new ArgumentException("Already liked.");
         }
 
         _dataContext.Matches.Remove(match);
