@@ -41,6 +41,10 @@ jobs:
         Stripe.WebHookSecret: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
         Stripe.SuccessUrl: 'https://tete-a-tete.network/success'
         Stripe.CancelUrl: 'https://tete-a-tete.network/cancel'
+        SendGrid.ApiKey: ${{ secrets.SENDGRID_API_KEY }}
+        SendGrid.FromEmail: 'notifications@tetatet.network'
+        SendGrid.FromName: 'Tetatet App'
+        EmailRestoreLink: 'https://tete-a-tete.network/restore'
 
     - name: Apply EF Core Migrations
       run: |
