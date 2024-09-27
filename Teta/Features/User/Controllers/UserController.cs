@@ -220,6 +220,7 @@ public class UserController : ControllerBase
     
     [SwaggerOperation(Summary = "Update user password.")]
     [HttpPatch("updatePassword")]
+    [Authorize]
     public async Task<ActionResult> UpdatePassword([FromBody] UpdatePasswordDto dto)
     {
         var userId = HttpContext.Items["UserId"]?.ToString()!;

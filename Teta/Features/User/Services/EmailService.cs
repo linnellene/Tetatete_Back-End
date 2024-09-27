@@ -33,7 +33,8 @@ public class EmailService : IEmailService
 
         const string subject = "Tetatet App";
 
-        var msg = MailHelper.CreateSingleEmail(from, to, subject, subject, string.Empty);
-        var response = await _client.SendEmailAsync(msg);
+        var msg = MailHelper.CreateSingleEmail(from, to, subject, text, null);
+        
+        await _client.SendEmailAsync(msg);
     }
 }
