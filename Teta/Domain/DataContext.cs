@@ -31,6 +31,8 @@ public class DataContext: DbContext
     
     public DbSet<WorkCategoryInfoEntity> WorkCategoryInfos { get; set; }
     
+    public DbSet<MatchEntity> Matches { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserEntity>()
@@ -105,6 +107,21 @@ public class DataContext: DbContext
             .WithOne()
             .HasForeignKey<WorkCategoryInfoEntity>(f => f.UserId)
             .IsRequired();
+        
+        modelBuilder.Entity<MatchEntity>()
+            .HasKey(um => new { um.InitiatorId, um.ReceiverId });
+
+        modelBuilder.Entity<MatchEntity>()
+            .HasOne(um => um.Initiator)
+            .WithMany(u => u.InitiatedMatches)
+            .HasForeignKey(um => um.InitiatorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<MatchEntity>()
+            .HasOne(um => um.Receiver)
+            .WithMany(u => u.ReceivedMatches)
+            .HasForeignKey(um => um.ReceiverId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         base.OnModelCreating(modelBuilder);
     }
