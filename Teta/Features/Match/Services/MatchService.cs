@@ -21,7 +21,7 @@ public class MatchService : IMatchService
         _userService = userService;
     }
 
-    public async Task<GetMatchInfo> GetNewMatchUser(Guid userId)
+    public async Task<GetMatchInfos> GetNewMatchUsers(Guid userId)
     {
         var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
@@ -40,7 +40,7 @@ public class MatchService : IMatchService
         return await GetInfo(type.Value, userId);
     }
 
-    public async Task<GetUnansweredMatchInfo> GetUnansweredMatches(Guid userId)
+    public async Task<GetMatchInfos> GetUnansweredMatches(Guid userId)
     {
         var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
@@ -49,45 +49,34 @@ public class MatchService : IMatchService
             throw new ArgumentException("Invalid user id.");
         }
 
-        var usersToAnswer = await _dataContext.Matches
+        var userToAnswer = await _dataContext.Matches
             .Include(m => m.Initiator)
             .Where(m => m.ReceiverId == userId && m.IsMatch == false)
             .Select(m => m.Initiator)
-            .ToListAsync();
+            .FirstOrDefaultAsync();
 
-        if (usersToAnswer.Count == 0)
+        if (userToAnswer is null)
         {
             throw new ArgumentException("No unanswered matches.");
         }
 
-        var res = new List<IMatchInfoBase>();
-        var type = await _userService.GetFulfilledInfoType(usersToAnswer[0].Id);
+        var type = await _userService.GetFulfilledInfoType(userToAnswer.Id);
 
         if (type is null)
         {
             throw new ArgumentException("Unexpected category type.");
         }
 
-        foreach (var userToAnswer in usersToAnswer)
-        {
-            res.Add((await GetInfo(type.Value, userToAnswer.Id, true)).Info);
-        }
-
-        return new GetUnansweredMatchInfo
-        {
-            CategoryType = type.Value,
-            Infos = res
-        };
+        return await GetInfo(type.Value, userId, true);
     }
 
     public async Task LikeUser(Guid from, Guid to)
     {
-                
         if (from == to)
         {
             throw new ArgumentException("Cannot like yourself.");
         }
-        
+
         if (await _dataContext.Matches.AnyAsync(m => m.InitiatorId == from && m.ReceiverId == to))
         {
             throw new ArgumentException("Already liked.");
@@ -117,7 +106,7 @@ public class MatchService : IMatchService
         await _dataContext.SaveChangesAsync();
     }
 
-    public async Task LikeUserAsAnswer(Guid initiator, Guid receiver)
+    public async Task Dislike(Guid initiator, Guid receiver)
     {
         var match = await _dataContext.Matches.FirstOrDefaultAsync(m =>
             m.InitiatorId == initiator && m.ReceiverId == receiver);
@@ -126,27 +115,7 @@ public class MatchService : IMatchService
         {
             throw new ArgumentException("No matches with this user.");
         }
-        
-        if (match.IsMatch)
-        {
-            throw new ArgumentException("Already liked.");
-        }
 
-        match.IsMatch = true;
-
-        await _dataContext.SaveChangesAsync();
-    }
-
-    public async Task DislikeUserAsAnswer(Guid initiator, Guid receiver)
-    {
-        var match = await _dataContext.Matches.FirstOrDefaultAsync(m =>
-            m.InitiatorId == initiator && m.ReceiverId == receiver);
-
-        if (match is null)
-        {
-            throw new ArgumentException("No matches with this user.");
-        }
-        
         if (match.IsMatch)
         {
             throw new ArgumentException("Already liked.");
@@ -157,25 +126,23 @@ public class MatchService : IMatchService
         await _dataContext.SaveChangesAsync();
     }
 
-    private async Task<GetMatchInfo> GetInfo(CategoryType categoryType, Guid userId, bool unanswered = false)
+    private async Task<GetMatchInfos> GetInfo(CategoryType categoryType, Guid userId, bool unanswered = false)
     {
-        IMatchInfoBase info = new FriendsMatchInfo();
+        var infos = new List<IMatchInfoBase>();
 
         switch (categoryType)
         {
             case CategoryType.Friends:
             {
-                UserEntity user;
-
-                var usersWithIncludes = _dataContext.Users
-                    .Include(u => u.UserInfo)
-                    .Include(u => u.FriendsCategoryInfo)
-                    .Include(u => u.ReceivedMatches)
-                    .Include(u => u.InitiatedMatches);
+                List<UserEntity> users;
 
                 if (!unanswered)
                 {
-                    var users = await usersWithIncludes
+                    users = await _dataContext.Users
+                        .Include(u => u.UserInfo)
+                        .Include(u => u.FriendsCategoryInfo)
+                        .Include(u => u.ReceivedMatches)
+                        .Include(u => u.InitiatedMatches)
                         .Where(u =>
                             u.Id != userId &&
                             u.FriendsCategoryInfo != null &&
@@ -183,45 +150,50 @@ public class MatchService : IMatchService
                                 !u.InitiatedMatches.Any(m => m.InitiatorId == u.Id && m.ReceiverId == userId) &&
                                 !u.ReceivedMatches.Any(m => m.ReceiverId == u.Id && m.InitiatorId == userId)
                             ))
+                        .OrderBy(x => Guid.NewGuid())
+                        .Take(5)
                         .ToListAsync();
 
                     if (users.Count == 0)
                     {
                         throw new DataException("No users with the same category.");
                     }
-
-                    var idx = Random.Shared.Next(0, users.Count);
-
-                    user = users[idx];
                 }
                 else
                 {
-                    user = (await usersWithIncludes.FirstOrDefaultAsync(u => u.Id == userId))!;
+                    users = await _dataContext.Matches
+                        .Include(m => m.Initiator)
+                        .ThenInclude(i => i.UserInfo)
+                        .Include(m => m.Initiator)
+                        .ThenInclude(i => i.FriendsCategoryInfo)
+                        .Where(m => m.ReceiverId == userId && m.IsMatch == false)
+                        .Select(m => m.Initiator)
+                        .ToListAsync();
                 }
 
-                info = new FriendsMatchInfo
-                {
-                    UserId = user.Id,
-                    Age = user.UserInfo!.Age,
-                    Name = user.UserInfo.FullName,
-                    AboutMe = user.FriendsCategoryInfo!.Info
-                };
+                infos = users.Select(u => new FriendsMatchInfo
+                    {
+                        UserId = u.Id,
+                        Age = u.UserInfo!.Age,
+                        Name = u.UserInfo!.FullName,
+                        AboutMe = u.FriendsCategoryInfo!.Info
+                    })
+                    .Cast<IMatchInfoBase>()
+                    .ToList();
 
                 break;
             }
             case CategoryType.Love:
             {
-                UserEntity user;
-
-                var usersWithIncludes = _dataContext.Users
-                    .Include(u => u.UserInfo)
-                    .Include(u => u.LoveCategoryInfo)
-                    .Include(u => u.ReceivedMatches)
-                    .Include(u => u.InitiatedMatches);
+                List<UserEntity> users;
 
                 if (!unanswered)
                 {
-                    var users = await usersWithIncludes
+                    users = await _dataContext.Users
+                        .Include(u => u.UserInfo)
+                        .Include(u => u.LoveCategoryInfo)
+                        .Include(u => u.ReceivedMatches)
+                        .Include(u => u.InitiatedMatches)
                         .Where(u =>
                             u.Id != userId &&
                             u.LoveCategoryInfo != null &&
@@ -229,48 +201,53 @@ public class MatchService : IMatchService
                                 !u.InitiatedMatches.Any(m => m.InitiatorId == u.Id && m.ReceiverId == userId) &&
                                 !u.ReceivedMatches.Any(m => m.ReceiverId == u.Id && m.InitiatorId == userId)
                             ))
+                        .OrderBy(x => Guid.NewGuid())
+                        .Take(5)
                         .ToListAsync();
 
                     if (users.Count == 0)
                     {
                         throw new DataException("No users with the same category.");
                     }
-
-                    var idx = Random.Shared.Next(0, users.Count);
-
-                    user = users[idx];
                 }
                 else
                 {
-                    user = (await usersWithIncludes.FirstOrDefaultAsync(u => u.Id == userId))!;
+                    users = await _dataContext.Matches
+                        .Include(m => m.Initiator)
+                        .ThenInclude(i => i.UserInfo)
+                        .Include(m => m.Initiator)
+                        .ThenInclude(i => i.LoveCategoryInfo)
+                        .Where(m => m.ReceiverId == userId && m.IsMatch == false)
+                        .Select(m => m.Initiator)
+                        .ToListAsync();
                 }
 
-                info = new LoveMatchInfo
-                {
-                    UserId = user.Id,
-                    Age = user.UserInfo!.Age,
-                    Name = user.UserInfo.FullName,
-                    RelationshipGoals = user.LoveCategoryInfo!.Info,
-                    MinAge = user.LoveCategoryInfo!.MinAge,
-                    MaxAge = user.LoveCategoryInfo!.MaxAge,
-                    GenderId = user.LoveCategoryInfo!.GenderId,
-                };
+                infos = users.Select(u => new LoveMatchInfo
+                    {
+                        UserId = u.Id,
+                        Age = u.UserInfo!.Age,
+                        Name = u.UserInfo.FullName,
+                        RelationshipGoals = u.LoveCategoryInfo!.Info,
+                        MinAge = u.LoveCategoryInfo!.MinAge,
+                        MaxAge = u.LoveCategoryInfo!.MaxAge,
+                        GenderId = u.LoveCategoryInfo!.GenderId,
+                    })
+                    .Cast<IMatchInfoBase>()
+                    .ToList();
 
                 break;
             }
             case CategoryType.Work:
             {
-                UserEntity user;
-
-                var usersWithIncludes = _dataContext.Users
-                    .Include(u => u.UserInfo)
-                    .Include(u => u.WorkCategoryInfo)
-                    .Include(u => u.ReceivedMatches)
-                    .Include(u => u.InitiatedMatches);
+                List<UserEntity> users;
 
                 if (!unanswered)
                 {
-                    var users = await usersWithIncludes
+                    users = await _dataContext.Users
+                        .Include(u => u.UserInfo)
+                        .Include(u => u.WorkCategoryInfo)
+                        .Include(u => u.ReceivedMatches)
+                        .Include(u => u.InitiatedMatches)
                         .Where(u =>
                             u.Id != userId &&
                             u.WorkCategoryInfo != null &&
@@ -278,40 +255,47 @@ public class MatchService : IMatchService
                                 !u.InitiatedMatches.Any(m => m.InitiatorId == u.Id && m.ReceiverId == userId) &&
                                 !u.ReceivedMatches.Any(m => m.ReceiverId == u.Id && m.InitiatorId == userId)
                             ))
+                        .OrderBy(x => Guid.NewGuid())
+                        .Take(5)
                         .ToListAsync();
 
                     if (users.Count == 0)
                     {
                         throw new DataException("No users with the same category.");
                     }
-
-                    var idx = Random.Shared.Next(0, users.Count);
-
-                    user = users[idx];
                 }
                 else
                 {
-                    user = (await usersWithIncludes .FirstOrDefaultAsync(u => u.Id == userId))!;
+                    users = await _dataContext.Matches
+                        .Include(m => m.Initiator)
+                        .ThenInclude(i => i.UserInfo)
+                        .Include(m => m.Initiator)
+                        .ThenInclude(i => i.WorkCategoryInfo)
+                        .Where(m => m.ReceiverId == userId && m.IsMatch == false)
+                        .Select(m => m.Initiator)
+                        .ToListAsync();
                 }
 
-                info = new WorkMatchInfo
-                {
-                    UserId = user.Id,
-                    Age = user.UserInfo!.Age,
-                    Name = user.UserInfo.FullName,
-                    Occupation = user.WorkCategoryInfo!.Info,
-                    Income = user.WorkCategoryInfo!.Income,
-                    Skills = user.WorkCategoryInfo!.Skills,
-                    LookingFor = user.WorkCategoryInfo!.LookingFor,
-                };
+                infos = users.Select(u => new WorkMatchInfo
+                    {
+                        UserId = u.Id,
+                        Age = u.UserInfo!.Age,
+                        Name = u.UserInfo.FullName,
+                        Occupation = u.WorkCategoryInfo!.Info,
+                        Income = u.WorkCategoryInfo!.Income,
+                        Skills = u.WorkCategoryInfo!.Skills,
+                        LookingFor = u.WorkCategoryInfo!.LookingFor,
+                    })
+                    .Cast<IMatchInfoBase>()
+                    .ToList();
 
                 break;
             }
         }
 
-        return new GetMatchInfo
+        return new GetMatchInfos
         {
-            Info = info,
+            Info = infos,
             CategoryType = categoryType
         };
     }

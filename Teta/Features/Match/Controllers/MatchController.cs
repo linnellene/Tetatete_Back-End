@@ -29,11 +29,10 @@ public class MatchController : Controller
 
             return data.CategoryType switch
             {
-                CategoryType.Friends => Ok(data.Infos.Select(i => i as FriendsMatchInfo)),
-                CategoryType.Work => Ok(data.Infos.Select(i => i as WorkMatchInfo)),
-                _ => Ok(data.Infos.Select(i => i as LoveMatchInfo))
+                CategoryType.Friends => Ok(data.Info.Select(i => i as FriendsMatchInfo)),
+                CategoryType.Work => Ok(data.Info.Select(i => i as WorkMatchInfo)),
+                _ => Ok(data.Info.Select(i => i as LoveMatchInfo))
             };
-            
         }
         catch (Exception e)
         {
@@ -41,7 +40,7 @@ public class MatchController : Controller
         }
     }
 
-    [SwaggerOperation(Summary = "Gets random user to match")]
+    [SwaggerOperation(Summary = "Gets up to 5 random users to match")]
     [HttpGet("new")]
     public async Task<ActionResult> GetRandomUser()
     {
@@ -49,13 +48,13 @@ public class MatchController : Controller
 
         try
         {
-            var data = await _matchService.GetNewMatchUser(new Guid(userId));
+            var data = await _matchService.GetNewMatchUsers(new Guid(userId));
 
             return data.CategoryType switch
             {
-                CategoryType.Friends => Ok(data.Info as FriendsMatchInfo),
-                CategoryType.Work => Ok(data.Info as WorkMatchInfo),
-                _ => Ok(data.Info as LoveMatchInfo)
+                CategoryType.Friends => Ok(data.Info.Select(i => i as FriendsMatchInfo)),
+                CategoryType.Work => Ok(data.Info.Select(i => i as WorkMatchInfo)),
+                _ => Ok(data.Info.Select(i => i as LoveMatchInfo))
             };
         }
         catch (Exception e)
@@ -82,25 +81,7 @@ public class MatchController : Controller
         }
     }
 
-    [SwaggerOperation(Summary = "Likes user as an answer.")]
-    [HttpPost("likeInAnswer")]
-    public async Task<ActionResult> LikeUserAsAnswer([FromQuery] Guid responseUserId)
-    {
-        var userId = HttpContext.Items["UserId"]?.ToString()!;
-
-        try
-        {
-            await _matchService.LikeUserAsAnswer(responseUserId, new Guid(userId));
-
-            return Ok();
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
-    }
-
-    [SwaggerOperation(Summary = "Dislikes user as an answer.")]
+    [SwaggerOperation(Summary = "Dislikes user.")]
     [HttpDelete("dislike")]
     public async Task<ActionResult> DislikeUser([FromQuery] Guid responseUserId)
     {
@@ -108,7 +89,7 @@ public class MatchController : Controller
 
         try
         {
-            await _matchService.DislikeUserAsAnswer(responseUserId, new Guid(userId));
+            await _matchService.Dislike(responseUserId, new Guid(userId));
 
             return Ok();
         }
