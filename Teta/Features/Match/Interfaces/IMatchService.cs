@@ -4,6 +4,8 @@ namespace TetaBackend.Features.Match.Interfaces;
 
 public interface IMatchService
 {
+    Task<GetMatchInfos> GetUserMatches(Guid userId);
+    
     Task<GetMatchInfos> GetNewMatchUsers(Guid userId);
     
     Task<GetMatchInfos> GetUnansweredMatches(Guid userId);

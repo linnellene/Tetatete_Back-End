@@ -8,6 +8,8 @@ public class FriendsMatchInfo : IMatchInfoBase
     
     public Guid UserId { get; set; }
     
+    public List<string> ImageUrls { get; set; }
+
     public string Name { get; set; }
     
     public int Age { get; set; }

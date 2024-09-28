@@ -62,6 +62,29 @@ public class MatchController : Controller
             return BadRequest(e.Message);
         }
     }
+    
+    [SwaggerOperation(Summary = "Gets user matches")]
+    [HttpGet("existing")]
+    public async Task<ActionResult> GetUserMatches()
+    {
+        var userId = HttpContext.Items["UserId"]?.ToString()!;
+
+        try
+        {
+            var data = await _matchService.GetUserMatches(new Guid(userId));
+
+            return data.CategoryType switch
+            {
+                CategoryType.Friends => Ok(data.Info.Select(i => i as FriendsMatchInfo)),
+                CategoryType.Work => Ok(data.Info.Select(i => i as WorkMatchInfo)),
+                _ => Ok(data.Info.Select(i => i as LoveMatchInfo))
+            };
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
 
     [SwaggerOperation(Summary = "Likes user.")]
     [HttpPost("like")]
