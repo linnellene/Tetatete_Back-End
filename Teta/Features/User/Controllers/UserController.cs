@@ -201,6 +201,41 @@ public class UserController : ControllerBase
             return BadRequest(e.Message);
         }
     }
+    
+    [SwaggerOperation(Summary = "Send email to a specified email token to update password.")]
+    [HttpPost("forgotPassword")]
+    public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        try
+        {
+            await _userService.SendForgotPasswordEmail(dto.Email);
+
+            return Created();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+    
+    [SwaggerOperation(Summary = "Update user password.")]
+    [HttpPatch("updatePassword")]
+    [Authorize]
+    public async Task<ActionResult> UpdatePassword([FromBody] UpdatePasswordDto dto)
+    {
+        var userId = HttpContext.Items["UserId"]?.ToString()!;
+        
+        try
+        {
+            await _userService.UpdatePassword(new Guid(userId), dto.NewPassword);
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
 
     [SwaggerOperation(Summary = "Log into account with JWT as result.")]
     [HttpPost("login")]

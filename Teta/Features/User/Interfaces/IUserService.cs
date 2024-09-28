@@ -34,4 +34,8 @@ public interface IUserService
         where TCategory : class, ICategory;
 
     Task DeleteCategoryInfo(CategoryType type, Guid categoryId);
+
+    Task SendForgotPasswordEmail(string email);
+    
+    Task UpdatePassword(Guid userId, string password);
 }
