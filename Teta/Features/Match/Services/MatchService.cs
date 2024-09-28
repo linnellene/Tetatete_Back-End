@@ -77,6 +77,14 @@ public class MatchService : IMatchService
             throw new ArgumentException("Cannot like yourself.");
         }
 
+        var typeFrom = await _userService.GetFulfilledInfoType(from);
+        var typeTo = await _userService.GetFulfilledInfoType(to);
+
+        if (typeFrom != typeTo)
+        {
+            throw new ArgumentException("Different categories.");
+        }
+
         if (await _dataContext.Matches.AnyAsync(m => m.InitiatorId == from && m.ReceiverId == to))
         {
             throw new ArgumentException("Already liked.");
