@@ -30,6 +30,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Features\Chat\Controllers\" />
       <Folder Include="Features\Match\Controllers\" />
     </ItemGroup>
 

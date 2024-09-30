@@ -111,12 +111,26 @@ public class MatchService : IMatchService
         }
 
         var existingMatch =
-            await _dataContext.Matches.FirstOrDefaultAsync(m => m.ReceiverId == from && m.InitiatorId == to);
+            await _dataContext.Matches
+                .Include(m => m.Receiver)
+                .ThenInclude(r => r.UserInfo)
+                .Include(m => m.Initiator)
+                .ThenInclude(i => i.UserInfo)
+                .FirstOrDefaultAsync(m => m.ReceiverId == from && m.InitiatorId == to);
 
         if (existingMatch is not null)
         {
             existingMatch.IsMatch = true;
 
+            var newChat = new ChatEntity
+            {
+                UserAId = existingMatch.InitiatorId,
+                UserBId = existingMatch.ReceiverId,
+                Name =
+                    $"Chat between {existingMatch.Initiator.UserInfo!.FullName} and {existingMatch.Receiver.UserInfo!.FullName}"
+            };
+
+            await _dataContext.Chats.AddAsync(newChat);
             await _dataContext.SaveChangesAsync();
 
             return;
