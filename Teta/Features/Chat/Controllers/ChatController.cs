@@ -56,7 +56,7 @@ public class ChatController : ControllerBase
         }
     }
     
-    [SwaggerOperation(Summary = "Gets chat messages.")]
+    [SwaggerOperation(Summary = "Leave chat.")]
     [HttpPost("leave")]
     public async Task<ActionResult> LeaveChat([FromQuery] LeaveOrJoinChatDto dto)
     {
@@ -74,7 +74,7 @@ public class ChatController : ControllerBase
         }
     }
     
-    [SwaggerOperation(Summary = "Gets chat messages.")]
+    [SwaggerOperation(Summary = "Join chat.")]
     [HttpPost("join")]
     public async Task<ActionResult> Join([FromQuery] LeaveOrJoinChatDto dto)
     {
