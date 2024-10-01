@@ -100,10 +100,10 @@ public class UserService : IUserService
 
     public async Task<UserInfoEntity> FillInformation(Guid userId, FillUserInfoDto dto)
     {
-        var imageUrl = await _imageService.UploadImage(dto.Images);
-
         await ValidateUserInfo(dto.PlaceOfBirthId, dto.LocationId, dto.GenderId, dto.Languages, dto.FullName,
             dto.About, dto.Age);
+
+        var imageUrl = await _imageService.UploadImage(dto.Images);
 
         var userInfo = new UserInfoEntity
         {
@@ -289,14 +289,15 @@ public class UserService : IUserService
         await _dataContext.SaveChangesAsync();
     }
 
-    public async Task UpdateCategoryInfo<TCategory>(Guid infoId, TCategory? info)
+    public async Task UpdateCategoryInfo<TCategory>(Guid userId, Guid infoId, TCategory? info)
         where TCategory : class, ICategory
     {
         if (typeof(TCategory) == typeof(UpdateWorkCategoryInfoDto))
         {
             var parsedInfo = (info as UpdateWorkCategoryInfoDto)!;
 
-            var existingInfo = await _dataContext.WorkCategoryInfos.FirstOrDefaultAsync(w => w.Id == infoId);
+            var existingInfo =
+                await _dataContext.WorkCategoryInfos.FirstOrDefaultAsync(w => w.Id == infoId && w.UserId == userId);
 
             if (existingInfo is null)
             {
@@ -314,7 +315,8 @@ public class UserService : IUserService
         {
             var parsedInfo = (info as UpdateFriendsCategoryInfoDto)!;
 
-            var existingInfo = await _dataContext.FriendsCategoryInfos.FirstOrDefaultAsync(f => f.Id == infoId);
+            var existingInfo =
+                await _dataContext.FriendsCategoryInfos.FirstOrDefaultAsync(f => f.Id == infoId && f.UserId == userId);
 
             if (existingInfo is null)
             {
@@ -329,7 +331,8 @@ public class UserService : IUserService
         {
             var parsedInfo = (info as UpdateLoveCategoryInfoDto)!;
 
-            var existingInfo = await _dataContext.LoveCategoryInfos.FirstOrDefaultAsync(l => l.Id == infoId);
+            var existingInfo =
+                await _dataContext.LoveCategoryInfos.FirstOrDefaultAsync(l => l.Id == infoId && l.UserId == userId);
 
             if (existingInfo is null)
             {
@@ -401,7 +404,7 @@ public class UserService : IUserService
             throw new ArgumentException("Invalid email.");
         }
 
-        var token =  _jwtService.GenerateToken(user.Id);
+        var token = _jwtService.GenerateToken(user.Id);
         var link = _emaiLRedirectUrl + "?token=" + token;
 
         var message = $"Tetatet App. Link to restore password: {link}";
@@ -417,7 +420,7 @@ public class UserService : IUserService
         {
             throw new ArgumentException("Invalid user id.");
         }
-        
+
         await ValidateAuthParameters(null, null, password);
 
         var hashedPassword = PasswordHasher.HashPassword(password);

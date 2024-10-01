@@ -30,10 +30,10 @@ public interface IUserService
     Task FillCategoryInfo<TCategory>(Guid userId, TCategory info)
         where TCategory : class, ICategory;
 
-    Task UpdateCategoryInfo<TCategory>(Guid categoryId, TCategory info)
+    Task UpdateCategoryInfo<TCategory>(Guid userId, Guid categoryId, TCategory info)
         where TCategory : class, ICategory;
 
-    Task DeleteCategoryInfo(CategoryType type, Guid categoryId);
+    Task DeleteCategoryInfo(CategoryType type, Guid userId);
 
     Task SendForgotPasswordEmail(string email);
     

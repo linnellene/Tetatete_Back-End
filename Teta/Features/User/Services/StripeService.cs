@@ -10,15 +10,17 @@ namespace TetaBackend.Features.User.Services;
 public class StripeService : IStripeService
 {
     private readonly DataContext _dataContext;
+    private readonly IUserService _userService;
     private readonly CustomerService _customerService;
     private readonly SessionService _sessionService;
     private readonly List<string> _paymentMethods;
     private readonly string _successUrl;
     private readonly string _cancelUrl;
 
-    public StripeService(DataContext dataContext, IConfiguration configuration)
+    public StripeService(DataContext dataContext, IConfiguration configuration, IUserService userService)
     {
         _dataContext = dataContext;
+        _userService = userService;
         _customerService = new CustomerService();
         _sessionService = new SessionService();
 
@@ -50,7 +52,9 @@ public class StripeService : IStripeService
 
     public async Task<string> CreateCheckoutSession(Guid userId, string priceId)
     {
-        var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await _dataContext.Users
+            .Include(u => u.UserInfo)
+            .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user is null)
         {
@@ -60,6 +64,13 @@ public class StripeService : IStripeService
         if (user.IsStripeSubscriptionPaid)
         {
             throw new ArgumentException("Already paid.");
+        }
+
+        var type = await _userService.GetFulfilledInfoType(userId);
+
+        if (user.UserInfo is null || type is null)
+        {
+            throw new ArgumentException("User info or category info is not fulfilled");
         }
 
         if (user.StripeCustomerId is null)
@@ -89,7 +100,8 @@ public class StripeService : IStripeService
         return session.Url;
     }
 
-    public async Task UpdateSubscriptionStatusForUser(string customerId, bool status, string? subscriptionId, DateTimeOffset? expiresAt)
+    public async Task UpdateSubscriptionStatusForUser(string customerId, bool status, string? subscriptionId,
+        DateTimeOffset? expiresAt)
     {
         var user = await _dataContext.Users.FirstOrDefaultAsync(u =>
             u.StripeCustomerId == customerId);
@@ -105,7 +117,7 @@ public class StripeService : IStripeService
 
         await _dataContext.SaveChangesAsync();
     }
-    
+
     public async Task CancelSubscription(Guid userId)
     {
         var user = await _dataContext.Users.FirstOrDefaultAsync(u =>
@@ -115,14 +127,14 @@ public class StripeService : IStripeService
         {
             throw new ArgumentException("Invalid user id.");
         }
-        
+
         var options = new SubscriptionCancelOptions
         {
             InvoiceNow = false,
         };
 
         var subscriptionService = new SubscriptionService();
-        
+
         await subscriptionService.CancelAsync(user.StripeSubscriptionId, options);
 
         user.StripeSubscriptionId = null;

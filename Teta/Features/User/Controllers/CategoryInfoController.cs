@@ -124,7 +124,7 @@ public class CategoryInfoController : ControllerBase
             return BadRequest(e.Message);
         }
     }
-    
+
     [SwaggerOperation(Summary =
         "Creates friends user category info if not exists. If exists - overwrites, if exists by the same type - 404.")]
     [HttpPost("friends")]
@@ -162,7 +162,7 @@ public class CategoryInfoController : ControllerBase
             return BadRequest(e.Message);
         }
     }
-    
+
     [SwaggerOperation(Summary =
         "Creates work user category info if not exists. If exists - overwrites, if exists by the same type - 404.")]
     [HttpPost("work")]
@@ -203,7 +203,7 @@ public class CategoryInfoController : ControllerBase
             return BadRequest(e.Message);
         }
     }
-    
+
     [SwaggerOperation(Summary = "Updates user friends category info if exists. If not - 404")]
     [HttpPatch("friends")]
     public async Task<ActionResult> UpdateFriendsUserCategoryInfo([FromBody] UpdateFriendsCategoryInfoDto dto)
@@ -219,7 +219,7 @@ public class CategoryInfoController : ControllerBase
 
         try
         {
-            await _userService.UpdateCategoryInfo(dto.Id, dto);
+            await _userService.UpdateCategoryInfo(new Guid(userId), dto.Id, dto);
 
             return Ok();
         }
@@ -244,7 +244,7 @@ public class CategoryInfoController : ControllerBase
 
         try
         {
-            await _userService.UpdateCategoryInfo(dto.Id, dto);
+            await _userService.UpdateCategoryInfo(new Guid(userId), dto.Id, dto);
 
             return Ok();
         }
@@ -259,7 +259,7 @@ public class CategoryInfoController : ControllerBase
     public async Task<ActionResult> UpdateWorkUserCategoryInfo([FromBody] UpdateWorkCategoryInfoDto dto)
     {
         var userId = HttpContext.Items["UserId"]?.ToString()!;
-        
+
         var existingInfoType = await _userService.GetFulfilledInfoType(new Guid(userId));
 
         if (existingInfoType is null)
@@ -269,7 +269,7 @@ public class CategoryInfoController : ControllerBase
 
         try
         {
-            await _userService.UpdateCategoryInfo(dto.Id, dto);
+            await _userService.UpdateCategoryInfo(new Guid(userId), dto.Id, dto);
 
             return Ok();
         }

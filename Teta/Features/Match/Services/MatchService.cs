@@ -120,6 +120,11 @@ public class MatchService : IMatchService
 
         if (existingMatch is not null)
         {
+            if (!existingMatch.Receiver.IsStripeSubscriptionPaid || !existingMatch.Initiator.IsStripeSubscriptionPaid)
+            {
+                throw new ArgumentException("One of the users hasn't paid his subscription!");
+            }
+
             existingMatch.IsMatch = true;
 
             var newChat = new ChatEntity
@@ -150,8 +155,11 @@ public class MatchService : IMatchService
 
     public async Task Dislike(Guid initiator, Guid receiver)
     {
-        var match = await _dataContext.Matches.FirstOrDefaultAsync(m =>
-            m.InitiatorId == initiator && m.ReceiverId == receiver);
+        var match = await _dataContext.Matches
+            .Include(matchEntity => matchEntity.Receiver)
+            .Include(matchEntity => matchEntity.Initiator)
+            .FirstOrDefaultAsync(m =>
+                m.InitiatorId == initiator && m.ReceiverId == receiver);
 
         if (match is null)
         {
@@ -161,6 +169,11 @@ public class MatchService : IMatchService
         if (match.IsMatch)
         {
             throw new ArgumentException("Already liked.");
+        }
+
+        if (!match.Receiver.IsStripeSubscriptionPaid || !match.Initiator.IsStripeSubscriptionPaid)
+        {
+            throw new ArgumentException("One of the users hasn't paid his subscription!");
         }
 
         _dataContext.Matches.Remove(match);
@@ -191,6 +204,7 @@ public class MatchService : IMatchService
                             .Include(u => u.InitiatedMatches)
                             .Where(u =>
                                 u.Id != userId &&
+                                u.IsStripeSubscriptionPaid &&
                                 u.FriendsCategoryInfo != null &&
                                 u.UserInfo != null && (
                                     !u.InitiatedMatches.Any(m => m.InitiatorId == u.Id && m.ReceiverId == userId) &&
@@ -272,6 +286,7 @@ public class MatchService : IMatchService
                             .Include(u => u.InitiatedMatches)
                             .Where(u =>
                                 u.Id != userId &&
+                                u.IsStripeSubscriptionPaid &&
                                 u.LoveCategoryInfo != null &&
                                 u.UserInfo != null && (
                                     !u.InitiatedMatches.Any(m => m.InitiatorId == u.Id && m.ReceiverId == userId) &&
@@ -356,6 +371,7 @@ public class MatchService : IMatchService
                             .Include(u => u.InitiatedMatches)
                             .Where(u =>
                                 u.Id != userId &&
+                                u.IsStripeSubscriptionPaid &&
                                 u.WorkCategoryInfo != null &&
                                 u.UserInfo != null && (
                                     !u.InitiatedMatches.Any(m => m.InitiatorId == u.Id && m.ReceiverId == userId) &&
