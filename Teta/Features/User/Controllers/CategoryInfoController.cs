@@ -43,6 +43,7 @@ public class CategoryInfoController : ControllerBase
 
                 var response = new UserFriendsCategoryInfoDto
                 {
+                    Id = info.Id,
                     Info = info.Info,
                     CategoryType = CategoryType.Friends
                 };
@@ -56,6 +57,7 @@ public class CategoryInfoController : ControllerBase
 
                 var response = new UserLoveCategoryInfoDto
                 {
+                    Id = info.Id,
                     Info = info.Info,
                     GenderId = info.GenderId,
                     MaxAge = info.MaxAge,
@@ -70,8 +72,9 @@ public class CategoryInfoController : ControllerBase
             {
                 var info = (await _userService.GetCategoryInfo<WorkCategoryInfoEntity>(userIdGuid))!;
 
-                var response = new UserWorkCategoryInfoDto()
+                var response = new UserWorkCategoryInfoDto
                 {
+                    Id = info.Id,
                     Info = info.Info,
                     Income = info.Income,
                     Skills = info.Skills,
