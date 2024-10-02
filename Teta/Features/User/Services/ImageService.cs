@@ -34,7 +34,7 @@ public class ImageService : IImageService
     {
         if (images.Count is 0 or > MaxImagesCount)
         {
-            throw new InvalidDataException("Min images count is 0 and max count is 6.");
+            throw new InvalidDataException($"Min images count is 0 and max count is {MaxImagesCount}.");
         }
 
         var result = new List<string>();

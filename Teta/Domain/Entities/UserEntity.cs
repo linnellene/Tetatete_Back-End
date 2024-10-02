@@ -38,4 +38,8 @@ public class UserEntity : BaseEntity
     public ICollection<MatchEntity> InitiatedMatches { get; set; }
     
     public ICollection<MatchEntity> ReceivedMatches { get; set; }
+    
+    public ICollection<ChatEntity> ChatsA { get; set; }
+    
+    public ICollection<ChatEntity> ChatsB { get; set; }
 }

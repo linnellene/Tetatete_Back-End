@@ -33,6 +33,10 @@ public class DataContext: DbContext
     
     public DbSet<MatchEntity> Matches { get; set; }
     
+    public DbSet<ChatEntity> Chats { get; set; }
+    
+    public DbSet<MessageEntity> Messages { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserEntity>()
@@ -121,6 +125,30 @@ public class DataContext: DbContext
             .HasOne(um => um.Receiver)
             .WithMany(u => u.ReceivedMatches)
             .HasForeignKey(um => um.ReceiverId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ChatEntity>()
+            .HasOne(um => um.UserA)
+            .WithMany(u => u.ChatsA)
+            .HasForeignKey(um => um.UserAId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ChatEntity>()
+            .HasOne(um => um.UserB)
+            .WithMany(u => u.ChatsB)
+            .HasForeignKey(um => um.UserBId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<MessageEntity>()
+            .HasOne(m => m.Chat)
+            .WithMany(c => c.Messages)
+            .HasForeignKey(m => m.ChatId)
+            .OnDelete(DeleteBehavior.Restrict);
+    
+        modelBuilder.Entity<MessageEntity>()
+            .HasOne(m => m.Sender)
+            .WithMany()
+            .HasForeignKey(m => m.SenderId)
             .OnDelete(DeleteBehavior.Restrict);
         
         base.OnModelCreating(modelBuilder);

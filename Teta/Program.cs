@@ -5,6 +5,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Stripe;
 using TetaBackend.Domain;
+using TetaBackend.Features.Chat.Hubs;
+using TetaBackend.Features.Chat.Interfaces;
+using TetaBackend.Features.Chat.Services;
 using TetaBackend.Features.Match.Interfaces;
 using TetaBackend.Features.Match.Services;
 using TetaBackend.Features.Shared.Middlewares;
@@ -25,6 +28,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<IMatchService, MatchService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
@@ -72,9 +76,35 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
             .GetBytes(builder.Configuration.GetSection("Jwt:Secret").Value)),
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            var path = context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
+    };
 });
 
+builder.Services.AddSignalR(options =>
+{
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(15);
+    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+    options.MaximumParallelInvocationsPerClient = byte.MaxValue;
+}).AddHubOptions<ChatHub>(options => options.EnableDetailedErrors = true);
+
 var app = builder.Build();
+
+app.MapHub<ChatHub>("/chatHub");
 
 app.UseMiddleware<JwtMiddleware>();
 
