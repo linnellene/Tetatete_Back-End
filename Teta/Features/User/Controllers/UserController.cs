@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TetaBackend.Features.User.Dto;
+using TetaBackend.Features.User.Dto.OAuth;
 using TetaBackend.Features.User.Interfaces;
 
 namespace TetaBackend.Features.User.Controllers;
@@ -24,9 +25,12 @@ public class UserController : ControllerBase
     [Authorize]
     public ActionResult CheckAuth()
     {
-        return Ok();
+        return Ok(new CheckAuthResponse
+        {
+            IsAuth = true,
+        });
     }
-    
+
     [SwaggerOperation(Summary = "Gets all genders.")]
     [HttpGet("genders")]
     [Authorize]
@@ -39,8 +43,8 @@ public class UserController : ControllerBase
             Id = g.Id,
             Name = g.Name,
         }));
-    } 
-    
+    }
+
     [SwaggerOperation(Summary = "Gets all locations.")]
     [HttpGet("locations")]
     [Authorize]
@@ -54,8 +58,8 @@ public class UserController : ControllerBase
             City = l.City,
             Country = l.Country
         }));
-    } 
-    
+    }
+
     [SwaggerOperation(Summary = "Gets all languages.")]
     [HttpGet("languages")]
     [Authorize]
@@ -68,7 +72,7 @@ public class UserController : ControllerBase
             Id = l.Id,
             Name = l.Name
         }));
-    } 
+    }
 
     [SwaggerOperation(Summary = "Returns user info if exists. If not - 404.")]
     [HttpGet("info")]
@@ -201,7 +205,7 @@ public class UserController : ControllerBase
             return BadRequest(e.Message);
         }
     }
-    
+
     [SwaggerOperation(Summary = "Send email to a specified email token to update password.")]
     [HttpPost("forgotPassword")]
     public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
@@ -217,14 +221,14 @@ public class UserController : ControllerBase
             return BadRequest(e.Message);
         }
     }
-    
+
     [SwaggerOperation(Summary = "Update user password.")]
     [HttpPatch("updatePassword")]
     [Authorize]
     public async Task<ActionResult> UpdatePassword([FromBody] UpdatePasswordDto dto)
     {
         var userId = HttpContext.Items["UserId"]?.ToString()!;
-        
+
         try
         {
             await _userService.UpdatePassword(new Guid(userId), dto.NewPassword);
@@ -247,12 +251,65 @@ public class UserController : ControllerBase
 
             if (authUser is null)
             {
-                return Unauthorized("Invalid credentials to log in.");
+                return NotFound("Invalid credentials to log in.");
             }
 
-            var jwt = _jwtService.GenerateToken(authUser.Id);
+            var jwt = _jwtService.GenerateToken(authUser.Id, authUser.Email);
 
-            return Ok(jwt);
+            return Ok(new LoginResponseDto
+            {
+                Token = jwt
+            });
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+    [HttpGet("googleLogin")]
+    public ActionResult LoginGoogle()
+    {
+        return Ok(new RequestOauthLoginResponseDto
+        {
+            Url = _userService.GenerateGoogleLoginLink()
+        });
+    }
+
+    [HttpPost("googleResponse")]
+    public async Task<ActionResult> GoogleResponseAsync(OauthResponseDto dto)
+    {
+        try
+        {
+            return Ok(new LoginResponseDto
+            {
+                Token = await _userService.AuthorizeUserFromGoogleAsync(dto.Code)
+            });
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+    [HttpGet("facebookLogin")]
+    public ActionResult LoginFacebook()
+    {
+        return Ok(new RequestOauthLoginResponseDto
+        {
+            Url = _userService.GenerateFacebookLoginLink()
+        });
+    }
+
+    [HttpPost("facebookResponse")]
+    public async Task<ActionResult> FacebookResponseAsync(OauthResponseDto dto)
+    {
+        try
+        {
+            return Ok(new LoginResponseDto
+            {
+                Token = await _userService.AuthorizeUserFromFacebookAsync(dto.Code)
+            });
         }
         catch (Exception e)
         {

@@ -1,4 +1,7 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using TetaBackend.Domain;
 using TetaBackend.Domain.Entities;
@@ -6,19 +9,35 @@ using TetaBackend.Domain.Entities.CategoryInfo;
 using TetaBackend.Features.Interfaces;
 using TetaBackend.Features.User.Dto;
 using TetaBackend.Features.User.Dto.Category;
+using TetaBackend.Features.User.Dto.OAuth;
 using TetaBackend.Features.User.Enums;
+using TetaBackend.Features.User.Helpers;
 using TetaBackend.Features.User.Interfaces;
 using TetaBackend.Features.User.Utilities;
+using Exception = System.Exception;
 
 namespace TetaBackend.Features.User.Services;
 
 public class UserService : IUserService
 {
+    private const string GoogleOauthLoginLinkTemplate =
+        "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={0}&scope=openid%20profile%20email&redirect_uri={1}/handle-google-oauth&state=google-auth&flowName=GeneralOAuthFlow";
+
+    private const string GoogleTokenLink = "https://oauth2.googleapis.com/token";
+
+    private const string FacebookOauthLoginLinkTemplate =
+        "https://www.facebook.com/v15.0/dialog/oauth?client_id={0}&redirect_uri={1}/handle-facebook-oauth&state=facebook-auth&scope=email";
+
+    private const string FacebookTokenLink = "https://graph.facebook.com/v15.0/oauth/access_token";
+    private const string FacebookAccountInfoLink = "https://graph.facebook.com/me";
+
+
     private readonly DataContext _dataContext;
     private readonly IImageService _imageService;
     private readonly IEmailService _emailService;
     private readonly IJwtService _jwtService;
-    private readonly string _emaiLRedirectUrl;
+    private readonly IConfiguration _configuration;
+    private readonly string _emailRedirectUrl;
 
     public UserService(DataContext dataContext, IImageService imageService, IEmailService emailService,
         IConfiguration configuration, IJwtService jwtService)
@@ -27,10 +46,11 @@ public class UserService : IUserService
         _imageService = imageService;
         _emailService = emailService;
         _jwtService = jwtService;
+        _configuration = configuration;
 
         var redirectUrl = configuration.GetSection("EmailRestoreLink").Value;
 
-        _emaiLRedirectUrl = redirectUrl ?? throw new ArgumentException("Invalid email restore link");
+        _emailRedirectUrl = redirectUrl ?? throw new ArgumentException("Invalid email restore link");
     }
 
     public async Task<IEnumerable<GenderEntity>> GetAllGenders()
@@ -404,8 +424,8 @@ public class UserService : IUserService
             throw new ArgumentException("Invalid email.");
         }
 
-        var token = _jwtService.GenerateToken(user.Id);
-        var link = _emaiLRedirectUrl + "?token=" + token;
+        var token = _jwtService.GenerateToken(user.Id, email);
+        var link = _emailRedirectUrl + "?token=" + token;
 
         var message = $"Tetatet App. Link to restore password: {link}";
 
@@ -428,6 +448,106 @@ public class UserService : IUserService
         user.Password = hashedPassword;
 
         await _dataContext.SaveChangesAsync();
+    }
+
+    public string GenerateGoogleLoginLink()
+    {
+        return string.Format(GoogleOauthLoginLinkTemplate,
+            _configuration.GetSection("Authentication:Google:Id").Value,
+            _configuration.GetSection("Domains:Client").Value);
+    }
+
+    public async Task<string> AuthorizeUserFromGoogleAsync(string code)
+    {
+        var responseString = await HttpHelper.SendPostRequestAsync(GoogleTokenLink,
+            new Dictionary<string, string>
+            {
+                { "code", code },
+                { "client_id", _configuration.GetSection("Authentication:Google:Id").Value! },
+                { "client_secret", _configuration.GetSection("Authentication:Google:Secret").Value! },
+                { "redirect_uri", $"{_configuration.GetSection("Domains:Client").Value}/handle-google-oauth" },
+                { "grant_type", "authorization_code" },
+            });
+
+        var tokenResponse = JsonSerializer.Deserialize<GoogleTokenResponseDto>(responseString);
+        var handler = new JwtSecurityTokenHandler();
+        
+        if (tokenResponse?.id_token == null)
+        {
+            throw new Exception("Google auth response error.");
+        }
+
+        var jwtToken = handler.ReadJwtToken(tokenResponse?.id_token);
+        var email = jwtToken.Claims.FirstOrDefault(claim => claim.Type == "email")?.Value;
+
+        if (email == null)
+        {
+            throw new Exception("No email in JWT.");
+        }
+
+        return await CreateOrGetByEmailAndReturnToken(email);
+    }
+
+    public string GenerateFacebookLoginLink()
+    {
+        return string.Format(FacebookOauthLoginLinkTemplate,
+            _configuration.GetSection("Authentication:Facebook:Id").Value,
+            _configuration.GetSection("Domains:Client").Value);
+    }
+
+    public async Task<string> AuthorizeUserFromFacebookAsync(string code)
+    {
+        var responseTokenString = await HttpHelper.SendPostRequestAsync(FacebookTokenLink,
+            new Dictionary<string, string>
+            {
+                { "code", code },
+                { "client_id", _configuration.GetSection("Authentication:Facebook:Id").Value! },
+                { "client_secret", _configuration.GetSection("Authentication:Facebook:Secret").Value! },
+                { "redirect_uri", $"{_configuration.GetSection("Domains:Client").Value}/handle-facebook-oauth" },
+            });
+        var tokenResponse = JsonSerializer.Deserialize<FacebookTokenResponseDto>(responseTokenString);
+
+        if (tokenResponse?.access_token == null)
+        {
+            throw new Exception("Facebook auth response error.");
+        }
+
+        var accessToken = tokenResponse.access_token;
+        var responseAccountString = await HttpHelper.SendPostRequestAsync(FacebookAccountInfoLink,
+            new Dictionary<string, string>()
+            {
+                { "fields", "email" },
+                { "access_token", accessToken }
+            });
+        
+        var facebookAccountResponse = JsonSerializer.Deserialize<FacebookAccountResponseDto>(responseAccountString);
+        var email = facebookAccountResponse?.email;
+        
+        if (email == null)
+        {
+            throw new Exception("No email in JWT.");
+        }
+
+        return await CreateOrGetByEmailAndReturnToken(email);
+    }
+
+    private async Task<string> CreateOrGetByEmailAndReturnToken(string email)
+    {
+        var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
+
+        if (user is null)
+        {
+            user = new UserEntity
+            {
+                Email = email,
+            };
+
+            await _dataContext.AddAsync(user);
+
+            await _dataContext.SaveChangesAsync();
+        }
+
+        return _jwtService.GenerateToken(user.Id, user.Email);
     }
 
     private async Task ValidateUserInfo(Guid? placeOfBirthId, Guid? locationId, Guid? genderId,
@@ -556,7 +676,7 @@ public class UserService : IUserService
 
         if (phone is not null && !Regex.IsMatch(phone, @"^\+1-\d{3}-\d{3}-\d{4}$"))
         {
-            throw new ArgumentException("Invalid phone.");
+            throw new ArgumentException("Invalid phone. It should start from +1, example: +1-999-888-7766");
         }
 
         if (!Regex.IsMatch(password, @"^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':""\\|,.<>\/?]+$"))

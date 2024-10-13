@@ -38,4 +38,12 @@ public interface IUserService
     Task SendForgotPasswordEmail(string email);
     
     Task UpdatePassword(Guid userId, string password);
+    
+    string GenerateGoogleLoginLink();
+
+    Task<string> AuthorizeUserFromGoogleAsync(string code);
+    
+    string GenerateFacebookLoginLink();
+
+    Task<string> AuthorizeUserFromFacebookAsync(string code);
 }

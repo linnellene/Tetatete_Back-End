@@ -338,11 +338,9 @@ namespace TetaBackend.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Password")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("StripeCustomerId")

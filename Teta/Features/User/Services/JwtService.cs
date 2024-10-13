@@ -15,11 +15,12 @@ public class JwtService: IJwtService
         _configuration = configuration;
     }
 
-    public string GenerateToken(Guid userId)
+    public string GenerateToken(Guid userId, string email)
     {
         var claims = new List<Claim>
         {
-            new (ClaimTypes.NameIdentifier, userId.ToString())
+            new (ClaimTypes.NameIdentifier, userId.ToString()),
+            new (ClaimTypes.Email, email)
         };
 
         var secret = _configuration.GetSection("Jwt:Secret").Value;
@@ -30,7 +31,7 @@ public class JwtService: IJwtService
         }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
             claims: claims,
             expires: DateTime.Now.AddHours(2),
