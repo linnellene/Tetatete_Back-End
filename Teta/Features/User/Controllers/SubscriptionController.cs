@@ -32,7 +32,10 @@ public class SubscriptionController : ControllerBase
         {
             var userId = HttpContext.Items["UserId"]?.ToString()!;
 
-            return Ok(await _stripeService.CheckIfSubscriptionIsPaid(new Guid(userId)));
+            return Ok(new CheckIfSubscriptionIsPaidDto
+            {
+                IsPaid = await _stripeService.CheckIfSubscriptionIsPaid(new Guid(userId))
+            });
         }
         catch (Exception e)
         {

@@ -102,7 +102,7 @@ public class UserService : IUserService
         var user = await _dataContext.Users.FirstOrDefaultAsync(
             u => phone == null ? u.Email == email : u.Phone == phone);
 
-        if (user is null)
+        if (user?.Password is null)
         {
             return null;
         }
@@ -471,7 +471,7 @@ public class UserService : IUserService
 
         var tokenResponse = JsonSerializer.Deserialize<GoogleTokenResponseDto>(responseString);
         var handler = new JwtSecurityTokenHandler();
-        
+
         if (tokenResponse?.id_token == null)
         {
             throw new Exception("Google auth response error.");
@@ -519,10 +519,10 @@ public class UserService : IUserService
                 { "fields", "email" },
                 { "access_token", accessToken }
             });
-        
+
         var facebookAccountResponse = JsonSerializer.Deserialize<FacebookAccountResponseDto>(responseAccountString);
         var email = facebookAccountResponse?.email;
-        
+
         if (email == null)
         {
             throw new Exception("No email in JWT.");
@@ -535,18 +535,19 @@ public class UserService : IUserService
     {
         var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
 
-        if (user is null)
+        if (user is not null)
         {
-            user = new UserEntity
-            {
-                Email = email,
-            };
-
-            await _dataContext.AddAsync(user);
-
-            await _dataContext.SaveChangesAsync();
+            return _jwtService.GenerateToken(user.Id, user.Email);
         }
 
+        user = new UserEntity
+        {
+            Email = email,
+        };
+
+        await _dataContext.AddAsync(user);
+        await _dataContext.SaveChangesAsync();
+        
         return _jwtService.GenerateToken(user.Id, user.Email);
     }
 

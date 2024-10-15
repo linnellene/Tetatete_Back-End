@@ -14,6 +14,11 @@ public class JwtMiddleware
 
     public async Task InvokeAsync(HttpContext context, IJwtService jwtService)
     {
+        if (context.Response.HasStarted)
+        {
+            return;
+        }
+        
         var authorizationHeader = context.Request.Headers.Authorization;
 
         if (!authorizationHeader.ToString().StartsWith("Bearer"))
@@ -33,7 +38,6 @@ public class JwtMiddleware
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await context.Response.WriteAsync("Invalid user id in auth token.");
-            await _next(context);
 
             return;
         }

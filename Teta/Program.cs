@@ -106,6 +106,13 @@ var app = builder.Build();
 
 app.MapHub<ChatHub>("/chatHub");
 
+app.UseCors(x => x
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .AllowCredentials()
+    .WithOrigins(builder.Configuration.GetSection("AllowedCorsOrigins").Get<string[]>())
+);
+
 app.UseMiddleware<JwtMiddleware>();
 
 // if (app.Environment.IsDevelopment())
@@ -113,13 +120,6 @@ app.UseMiddleware<JwtMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI();
 // }
-
-app.UseCors(x => x
-    .AllowAnyMethod()
-    .AllowAnyHeader()
-    .AllowCredentials()
-    .WithOrigins(builder.Configuration.GetSection("AllowedCorsOrigins").Get<string[]>())
-);
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
