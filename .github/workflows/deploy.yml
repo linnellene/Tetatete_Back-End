@@ -44,7 +44,10 @@ jobs:
         SendGrid.ApiKey: ${{ secrets.SENDGRID_API_KEY }}
         SendGrid.FromEmail: 'notifications@tetatet.network'
         SendGrid.FromName: 'Tetatet App'
-        EmailRestoreLink: 'https://tete-a-tete.network/restore'
+        EmailRestoreLink: 'https://tete-a-tete.network/handle-forgot-password'
+        Domains.Client: 'https://tete-a-tete.network/'
+        Authentication.Google.Id: ${{ secrets.GOOGLE_ID }}
+        Authentication.Google.Secret: ${{ secrets.GOOGLE_SECRET }}
 
     - name: Apply EF Core Migrations
       run: |
