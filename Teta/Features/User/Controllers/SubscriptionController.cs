@@ -52,7 +52,10 @@ public class SubscriptionController : ControllerBase
         {
             var userId = HttpContext.Items["UserId"]?.ToString()!;
 
-            return Ok(await _stripeService.CreateCheckoutSession(new Guid(userId), dto.PriceId));
+            return Ok(new CreateCheckoutSessionResponseDto
+            {
+                Url = await _stripeService.CreateCheckoutSession(new Guid(userId), dto.PriceId)
+            });
         }
         catch (Exception e)
         {

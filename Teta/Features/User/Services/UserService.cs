@@ -280,6 +280,12 @@ public class UserService : IUserService
             throw new ArgumentException("Invalid user id.");
         }
 
+
+        if (!user.IsStripeSubscriptionPaid)
+        {
+            throw new ArgumentException("Subscription is not paid.");
+        }
+
         if (typeof(TCategory) == typeof(WorkCategoryInfoEntity))
         {
             var parsedInfo = (info as WorkCategoryInfoEntity)!;

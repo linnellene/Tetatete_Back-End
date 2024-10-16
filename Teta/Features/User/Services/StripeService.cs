@@ -66,13 +66,6 @@ public class StripeService : IStripeService
             throw new ArgumentException("Already paid.");
         }
 
-        var type = await _userService.GetFulfilledInfoType(userId);
-
-        if (user.UserInfo is null || type is null)
-        {
-            throw new ArgumentException("User info or category info is not fulfilled");
-        }
-
         if (user.StripeCustomerId is null)
         {
             await CreateCustomerForUser(user);
