@@ -553,7 +553,7 @@ public class UserService : IUserService
 
         await _dataContext.AddAsync(user);
         await _dataContext.SaveChangesAsync();
-        
+
         return _jwtService.GenerateToken(user.Id, user.Email);
     }
 
@@ -686,9 +686,10 @@ public class UserService : IUserService
             throw new ArgumentException("Invalid phone. It should start from +1, example: +1-999-888-7766");
         }
 
-        if (!Regex.IsMatch(password, @"^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':""\\|,.<>\/?]+$"))
+        if (!Regex.IsMatch(password, @"^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{5,}$"))
         {
-            throw new ArgumentException("Password must be in latin, without spaces.");
+            throw new ArgumentException(
+                "Password must be in latin, without spaces, have at least one uppercase letter, at least one digit and must be at least 5 symbols.");
         }
 
         if (!logIn && email is not null && await _dataContext.Users.AnyAsync(u => u.Email == email))
