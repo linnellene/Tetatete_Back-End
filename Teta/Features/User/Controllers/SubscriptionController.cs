@@ -94,7 +94,9 @@ public class SubscriptionController : ControllerBase
             var stripeEvent = EventUtility.ConstructEvent(
                 json,
                 stripeSignature,
-                _webhookSecret
+                _webhookSecret,
+                300,
+                false
             );
 
             switch (stripeEvent.Type)
