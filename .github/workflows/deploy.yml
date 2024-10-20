@@ -39,8 +39,8 @@ jobs:
         Stripe.SecretKey: ${{ secrets.STRIPE_SECRET_KEY }}
         Stripe.PublishableKey: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
         Stripe.WebHookSecret: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-        Stripe.SuccessUrl: 'https://tete-a-tete.network/success'
-        Stripe.CancelUrl: 'https://tete-a-tete.network/cancel'
+        Stripe.SuccessUrl: 'https://tete-a-tete.network/en'
+        Stripe.CancelUrl: 'https://tete-a-tete.network/en'
         SendGrid.ApiKey: ${{ secrets.SENDGRID_API_KEY }}
         SendGrid.FromEmail: 'notifications@tetatet.network'
         SendGrid.FromName: 'Tetatet App'
