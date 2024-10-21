@@ -594,7 +594,7 @@ public class UserService : IUserService
                 "Full name should contain more than 3 symbols and should not contain numbers and special symbols.");
         }
 
-        var isValidAboutRegex = Regex.IsMatch(about ?? "", @"^[a-z0-9., ]+$");
+        var isValidAboutRegex = Regex.IsMatch(about ?? "", @"^[a-zA-Z0-9., ]+$");
 
         if (about is not null && (about.Trim().Count(c => !char.IsWhiteSpace(c)) < 10 || !isValidAboutRegex))
         {
