@@ -31,6 +31,43 @@ public class UserController : ControllerBase
         });
     }
 
+    [SwaggerOperation(Summary = "Gets user info by id.")]
+    [HttpGet("userInfoById")]
+    [Authorize]
+    public async Task<ActionResult> GetUserInfoById([FromQuery] GetUserInfoByIdDto dto)
+    {
+        var userId = HttpContext.Items["UserId"]?.ToString()!;
+        var guidUserId = new Guid(userId);
+
+        var isInChat = await _userService.CheckIfUsersAreInChat(dto.Id, guidUserId);
+        if (dto.Id != guidUserId && !isInChat)
+        {
+            return BadRequest(
+                "Cannot get info of the user that is not in the chat with current user or is not current user.");
+        }
+
+        var userInfo = await _userService.GetUserInfo(dto.Id);
+
+        if (userInfo is null)
+        {
+            return NotFound("No info.");
+        }
+
+        var responseDto = new UserInfoDto
+        {
+            About = userInfo.About,
+            ImageUrls = userInfo.Images.Select(i => i.Url).ToList(),
+            Age = userInfo.Age,
+            FullName = userInfo.FullName,
+            GenderId = userInfo.GenderId,
+            LanguageIds = userInfo.UserInfoLanguages.Select(ui => ui.LanguageId).ToList(),
+            LocationId = userInfo.LocationId,
+            PlaceOfBirthId = userInfo.PlaceOfBirthId
+        };
+
+        return Ok(responseDto);
+    }
+
     [SwaggerOperation(Summary = "Gets all genders.")]
     [HttpGet("genders")]
     [Authorize]

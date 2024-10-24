@@ -1,10 +1,13 @@
 ﻿using TetaBackend.Domain.Enums;
 using TetaBackend.Features.Match.Dto.Base;
+using TetaBackend.Features.User.Enums;
 
 namespace TetaBackend.Features.Match.Dto;
 
 public class WorkMatchInfo : IMatchInfoBase
 {
+    public CategoryType CategoryType { get; set; } = CategoryType.Work;
+    
     public string Occupation { get; set; }
     
     public int Income { get; set; }

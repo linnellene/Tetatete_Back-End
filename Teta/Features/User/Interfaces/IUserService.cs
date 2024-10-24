@@ -9,6 +9,8 @@ public interface IUserService
 {
     Task<IEnumerable<GenderEntity>> GetAllGenders();
     
+    Task<bool> CheckIfUsersAreInChat(Guid userAId, Guid userBId);
+    
     Task<IEnumerable<LocationEntity>> GetAllLocations();
         
     Task<IEnumerable<LanguageEntity>> GetAllLanguages();

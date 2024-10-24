@@ -58,6 +58,12 @@ public class UserService : IUserService
         return await _dataContext.Genders.ToListAsync();
     }
 
+    public async Task<bool> CheckIfUsersAreInChat(Guid userAId, Guid userBId)
+    {
+        return await _dataContext.Chats.AnyAsync((c) =>
+            (c.UserAId == userAId && c.UserBId == userBId) || (c.UserBId == userAId && c.UserAId == userBId));
+    }
+
     public async Task<IEnumerable<LocationEntity>> GetAllLocations()
     {
         return await _dataContext.Locations.ToListAsync();
@@ -433,7 +439,8 @@ public class UserService : IUserService
         var token = _jwtService.GenerateToken(user.Id, email);
         var link = _emailRedirectUrl + "?token=" + token;
 
-        var message = $"Tetatet App.\n\nWelcome!\n\nTo restore password to your account, please follow the link:\n\nIf you received this email in error, simply ignore it\n\n{link}";
+        var message =
+            $"Tetatet App.\n\nWelcome!\n\nTo restore password to your account, please follow the link:\n\nIf you received this email in error, simply ignore it\n\n{link}";
 
         await _emailService.SendEmail(user.Email, message);
     }

@@ -1,9 +1,12 @@
 ﻿using TetaBackend.Features.Match.Dto.Base;
+using TetaBackend.Features.User.Enums;
 
 namespace TetaBackend.Features.Match.Dto;
 
 public class LoveMatchInfo : IMatchInfoBase
 {
+    public CategoryType CategoryType { get; set; } = CategoryType.Love;
+    
     public string RelationshipGoals { get; set; }
 
     public int MinAge { get; set; }
