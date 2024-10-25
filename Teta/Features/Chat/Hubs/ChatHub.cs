@@ -57,14 +57,25 @@ public class ChatHub : Hub
         
         await _dataContext.SaveChangesAsync();
 
-        var messageToSend = new SendMessageDto
+        var messageFromSender = new SendMessageDto
         {
-            SenderId = senderId,
+            MessageId = newMessage.Id.ToString(),
+            SentByUser = true,
             ChatId = room.Id.ToString(),
             Content = message,
+            Timestamp = newMessage.CreatedAt,
+        };
+        
+        var messageToReceiver = new SendMessageDto
+        {
+            MessageId = newMessage.Id.ToString(),
+            SentByUser = false,
+            ChatId = room.Id.ToString(),
+            Content = message,
+            Timestamp = newMessage.CreatedAt,
         };
 
-        await Clients.User(userId.ToString()).SendAsync("ReceiveMessage", messageToSend);
-        await Clients.User(senderId).SendAsync("ReceiveMessage", messageToSend);
+        await Clients.User(userId.ToString()).SendAsync("ReceiveMessage", messageToReceiver);
+        await Clients.User(senderId).SendAsync("ReceiveMessage", messageFromSender);
     }
 }
