@@ -7,6 +7,7 @@ using TetaBackend.Features.User.Enums;
 
 namespace TetaBackend.Features.Match.Controllers;
 
+[Route("api/[controller]")]
 [Authorize]
 public class MatchController : Controller
 {
