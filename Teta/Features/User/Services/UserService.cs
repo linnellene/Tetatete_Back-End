@@ -116,12 +116,58 @@ public class UserService : IUserService
         return PasswordHasher.VerifyPassword(password, user.Password) ? user : null;
     }
 
+    public async Task<GetUserByIdResponseDto?> GetUserInfoByChatId(Guid chatId, Guid userId)
+    {
+        var chat = await _dataContext.Chats.FirstOrDefaultAsync(c => c.Id == chatId);
+
+        if (chat is null)
+        {
+            throw new ArgumentException("Invalid chat id.");
+        }
+
+        if (chat.UserAId != userId && chat.UserBId != userId)
+        {
+            throw new ArgumentException("User is not in the chat.");
+        }
+
+        return await GetUserInfoForChats(chat.UserAId == userId ? chat.UserBId : chat.UserAId);
+    }
+
     public Task<UserInfoEntity?> GetUserInfo(Guid userId)
     {
         return _dataContext.UserInfos
             .Include(u => u.UserInfoLanguages)
             .Include(u => u.Images)
             .FirstOrDefaultAsync(u => u.UserId == userId);
+    }
+
+    public async Task<GetUserByIdResponseDto?> GetUserInfoForChats(Guid userId)
+    {
+        var existingInfo = await _dataContext.UserInfos
+            .Include(u => u.Images)
+            .Include(u => u.Gender)
+            .Include(u => u.PlaceOfBirth)
+            .Include(u => u.Location)
+            .Include(u => u.UserInfoLanguages)
+            .ThenInclude(ul => ul.Language)
+            .FirstOrDefaultAsync(u => u.UserId == userId);
+
+        if (existingInfo is null)
+        {
+            return null;
+        }
+
+        return new GetUserByIdResponseDto
+        {
+            PlaceOfBirth = existingInfo.PlaceOfBirth.Country,
+            Gender = existingInfo.Gender.Name,
+            Location = existingInfo.Location.Country,
+            FullName = existingInfo.FullName,
+            About = existingInfo.About,
+            Age = existingInfo.Age,
+            Languages = existingInfo.UserInfoLanguages.Select(l => l.Language.Name),
+            ProfilePictureUrls = existingInfo.Images.Select(i => i.Url),
+        };
     }
 
     public async Task<UserInfoEntity> FillInformation(Guid userId, FillUserInfoDto dto)

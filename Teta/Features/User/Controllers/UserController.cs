@@ -46,26 +46,39 @@ public class UserController : ControllerBase
                 "Cannot get info of the user that is not in the chat with current user or is not current user.");
         }
 
-        var userInfo = await _userService.GetUserInfo(dto.Id);
+        var userInfo = await _userService.GetUserInfoForChats(dto.Id);
 
         if (userInfo is null)
         {
             return NotFound("No info.");
         }
 
-        var responseDto = new UserInfoDto
-        {
-            About = userInfo.About,
-            ImageUrls = userInfo.Images.Select(i => i.Url).ToList(),
-            Age = userInfo.Age,
-            FullName = userInfo.FullName,
-            GenderId = userInfo.GenderId,
-            LanguageIds = userInfo.UserInfoLanguages.Select(ui => ui.LanguageId).ToList(),
-            LocationId = userInfo.LocationId,
-            PlaceOfBirthId = userInfo.PlaceOfBirthId
-        };
+        return Ok(userInfo);
+    }
 
-        return Ok(responseDto);
+    [SwaggerOperation(Summary = "Gets user info by chat id.")]
+    [HttpGet("userInfoByChatId")]
+    [Authorize]
+    public async Task<ActionResult> GetUserInfoByChatId([FromQuery] GetUserInfoByIdDto dto)
+    {
+        var userId = HttpContext.Items["UserId"]?.ToString()!;
+        var guidUserId = new Guid(userId);
+
+        try
+        {
+            var userInfo = await _userService.GetUserInfoByChatId(dto.Id, guidUserId);
+
+            if (userInfo is null)
+            {
+                return NotFound("No info.");
+            }
+
+            return Ok(userInfo);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
     }
 
     [SwaggerOperation(Summary = "Gets all genders.")]

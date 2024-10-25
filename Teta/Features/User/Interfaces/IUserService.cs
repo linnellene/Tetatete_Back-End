@@ -19,6 +19,10 @@ public interface IUserService
 
     Task<UserEntity?> Authenticate(string password, string? email, string? phone);
 
+    Task<GetUserByIdResponseDto?> GetUserInfoForChats(Guid userId);
+    
+    Task<GetUserByIdResponseDto?> GetUserInfoByChatId(Guid chatId, Guid userId);
+    
     Task<UserInfoEntity?> GetUserInfo(Guid userId);
 
     Task<UserInfoEntity> FillInformation(Guid userId, FillUserInfoDto dto);

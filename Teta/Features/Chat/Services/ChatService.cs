@@ -24,23 +24,35 @@ public class ChatService : IChatService
 
         var chats = await _dataContext.Chats
             .Include(c => c.Messages)
+            .Include(c => c.UserA)
+            .ThenInclude(u => u.UserInfo)
+            .ThenInclude(ui => ui.Images)
+            .Include(c => c.UserB)
+            .ThenInclude(u => u.UserInfo)
+            .ThenInclude(ui => ui.Images)
             .Where(c => c.UserAId == userId || c.UserBId == userId)
-            .Select(c => new ChatDto
-            {
-                Id = c.Id,
-                Name = c.Name,
-                UserAId = c.UserAId,
-                UserBId = c.UserBId,
-                UserALeft = c.UserALeft,
-                UserBLeft = c.UserBLeft,
-                LastMessage = c.Messages.OrderByDescending(m => m.CreatedAt).Select(m => new MessageDto
+            .Select(c =>
+                new ChatDto
                 {
-                    ChatId = m.ChatId,
-                    Content = m.Content,
-                    SenderId = m.SenderId,
-                    Timestamp = m.CreatedAt,
-                }).FirstOrDefault(),
-            })
+                    Id = c.Id,
+                    Name = c.Name,
+                    CompanionId = c.UserAId == userId ? c.UserBId : c.UserAId,
+                    CompanionLeft = c.UserAId == userId ? c.UserBLeft : c.UserALeft,
+                    CompanionName = c.UserAId == userId ? c.UserB.UserInfo!.FullName : c.UserA.UserInfo!.FullName,
+                    CompanionPictureUrl =
+                        c.UserAId == userId
+                            ? c.UserB.UserInfo!.Images.FirstOrDefault()!.Url
+                            : c.UserA.UserInfo!.Images.FirstOrDefault()!.Url,
+                    UserLeft = c.UserAId == userId ? c.UserALeft : c.UserBLeft,
+                    LastMessage = c.Messages.OrderByDescending(m => m.CreatedAt).Select(m => new MessageDto
+                    {
+                        ChatId = m.ChatId,
+                        Content = m.Content,
+                        SentByUser = m.SenderId == userId,
+                        Timestamp = m.CreatedAt,
+                    }).FirstOrDefault(),
+                }
+            )
             .ToListAsync();
 
         return chats;
@@ -64,7 +76,7 @@ public class ChatService : IChatService
 
         return messages;
     }
-    
+
     public async Task JoinChat(Guid userId, Guid chatId)
     {
         if (!await _dataContext.Users.AnyAsync(u => u.Id == userId))

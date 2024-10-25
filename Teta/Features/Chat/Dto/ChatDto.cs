@@ -6,13 +6,15 @@ public class ChatDto
     
     public string Name { get; set; }
     
-    public Guid UserAId { get; set; }
+    public Guid CompanionId { get; set; }
     
-    public Guid UserBId { get; set; }
+    public string CompanionName { get; set; }
     
-    public bool UserALeft { get; set; }
+    public string CompanionPictureUrl { get; set; }
     
-    public bool UserBLeft { get; set; }
+    public bool CompanionLeft { get; set; }
+    
+    public bool UserLeft { get; set; }
     
     public MessageDto? LastMessage { get; set; }
 }

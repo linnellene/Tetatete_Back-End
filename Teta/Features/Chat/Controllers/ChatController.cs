@@ -37,16 +37,17 @@ public class ChatController : ControllerBase
     public async Task<ActionResult> GetChatMessages([FromQuery] GetChatMessagesDto dto)
     {
         var userId = HttpContext.Items["UserId"]?.ToString()!;
+        var userIdGuid = new Guid(userId);
 
         try
         {
-            var messages = await _chatService.GetChatMessages(new Guid(userId), dto.ChatId);
+            var messages = await _chatService.GetChatMessages(userIdGuid, dto.ChatId);
 
             return Ok(messages.Select(m => new MessageDto
             {
                 ChatId = m.ChatId,
                 Content = m.Content,
-                SenderId = m.SenderId,
+                SentByUser = m.SenderId == userIdGuid,
                 Timestamp = m.CreatedAt
             }));
         }
