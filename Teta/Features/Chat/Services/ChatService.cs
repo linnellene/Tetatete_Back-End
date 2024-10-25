@@ -47,6 +47,7 @@ public class ChatService : IChatService
                     MatchedSince = c.CreatedAt,
                     LastMessage = c.Messages.OrderByDescending(m => m.CreatedAt).Select(m => new MessageDto
                     {
+                        MessageId = m.Id.ToString(),
                         ChatId = m.ChatId,
                         Content = m.Content,
                         SentByUser = m.SenderId == userId,

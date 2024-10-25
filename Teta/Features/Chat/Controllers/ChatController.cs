@@ -45,6 +45,7 @@ public class ChatController : ControllerBase
 
             return Ok(messages.Select(m => new MessageDto
             {
+                MessageId = m.Id.ToString(),
                 ChatId = m.ChatId,
                 Content = m.Content,
                 SentByUser = m.SenderId == userIdGuid,
