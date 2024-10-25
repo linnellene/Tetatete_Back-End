@@ -16,5 +16,7 @@ public class ChatDto
     
     public bool UserLeft { get; set; }
     
+    public DateTimeOffset MatchedSince { get; set; }
+    
     public MessageDto? LastMessage { get; set; }
 }

@@ -44,6 +44,7 @@ public class ChatService : IChatService
                             ? c.UserB.UserInfo!.Images.FirstOrDefault()!.Url
                             : c.UserA.UserInfo!.Images.FirstOrDefault()!.Url,
                     UserLeft = c.UserAId == userId ? c.UserALeft : c.UserBLeft,
+                    MatchedSince = c.CreatedAt,
                     LastMessage = c.Messages.OrderByDescending(m => m.CreatedAt).Select(m => new MessageDto
                     {
                         ChatId = m.ChatId,
