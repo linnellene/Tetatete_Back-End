@@ -11,6 +11,8 @@ public class MatchEntity : BaseEntity
     
     public bool IsMatch { get; set; }
     
+    public bool IsDisliked { get; set; }
+    
     [ForeignKey("InitiatorId")]
     public UserEntity Initiator { get; set; }
     

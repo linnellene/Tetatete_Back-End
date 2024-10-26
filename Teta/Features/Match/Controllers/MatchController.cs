@@ -113,7 +113,7 @@ public class MatchController : Controller
 
         try
         {
-            await _matchService.Dislike(responseUserId, new Guid(userId));
+            await _matchService.Dislike(new Guid(userId), responseUserId);
 
             return Ok();
         }

@@ -105,7 +105,7 @@ public class MatchService : IMatchService
             throw new ArgumentException("Different categories.");
         }
 
-        if (await _dataContext.Matches.AnyAsync(m => m.InitiatorId == from && m.ReceiverId == to))
+        if (await _dataContext.Matches.AnyAsync(m => m.InitiatorId == from && m.ReceiverId == to && m.IsMatch))
         {
             throw new ArgumentException("Already liked.");
         }
@@ -145,7 +145,8 @@ public class MatchService : IMatchService
         {
             InitiatorId = from,
             ReceiverId = to,
-            IsMatch = false
+            IsMatch = false,
+            IsDisliked = false,
         };
 
         await _dataContext.Matches.AddAsync(match);
@@ -155,28 +156,15 @@ public class MatchService : IMatchService
 
     public async Task Dislike(Guid initiator, Guid receiver)
     {
-        var match = await _dataContext.Matches
-            .Include(matchEntity => matchEntity.Receiver)
-            .Include(matchEntity => matchEntity.Initiator)
-            .FirstOrDefaultAsync(m =>
-                m.InitiatorId == initiator && m.ReceiverId == receiver);
-
-        if (match is null)
+        var matchToSave = new MatchEntity
         {
-            throw new ArgumentException("No matches with this user.");
-        }
+            InitiatorId = initiator,
+            ReceiverId = receiver,
+            IsMatch = false,
+            IsDisliked = true,
+        };
 
-        if (match.IsMatch)
-        {
-            throw new ArgumentException("Already liked.");
-        }
-
-        if (!match.Receiver.IsStripeSubscriptionPaid || !match.Initiator.IsStripeSubscriptionPaid)
-        {
-            throw new ArgumentException("One of the users hasn't paid his subscription!");
-        }
-
-        _dataContext.Matches.Remove(match);
+        await _dataContext.Matches.AddAsync(matchToSave);
 
         await _dataContext.SaveChangesAsync();
     }
@@ -185,6 +173,9 @@ public class MatchService : IMatchService
         GetMatchType type = GetMatchType.New)
     {
         var infos = new List<IMatchInfoBase>();
+
+        var userMatches = _dataContext.Matches
+            .Where(m => m.ReceiverId == userId || m.InitiatorId == userId).AsEnumerable();
 
         switch (categoryType)
         {
@@ -197,6 +188,7 @@ public class MatchService : IMatchService
                     case GetMatchType.New:
                     {
                         users = await _dataContext.Users
+                            .AsNoTracking()
                             .Include(u => u.UserInfo)
                             .ThenInclude(u => u.Images)
                             .Include(u => u.FriendsCategoryInfo)
@@ -207,8 +199,10 @@ public class MatchService : IMatchService
                                 u.IsStripeSubscriptionPaid &&
                                 u.FriendsCategoryInfo != null &&
                                 u.UserInfo != null && (
-                                    !u.InitiatedMatches.Any(m => m.InitiatorId == u.Id && m.ReceiverId == userId) &&
-                                    !u.ReceivedMatches.Any(m => m.ReceiverId == u.Id && m.InitiatorId == userId)
+                                    !userMatches.Any(m =>
+                                        m.InitiatorId == u.Id && m.ReceiverId == userId && m.IsDisliked) &&
+                                    !userMatches.Any(m =>
+                                        m.ReceiverId == u.Id && m.InitiatorId == userId && m.IsDisliked)
                                 ))
                             .OrderBy(x => Guid.NewGuid())
                             .Take(5)
@@ -279,18 +273,19 @@ public class MatchService : IMatchService
                     case GetMatchType.New:
                     {
                         users = await _dataContext.Users
+                            .AsNoTracking()
                             .Include(u => u.UserInfo)
                             .ThenInclude(u => u.Images)
                             .Include(u => u.LoveCategoryInfo)
-                            .Include(u => u.ReceivedMatches)
-                            .Include(u => u.InitiatedMatches)
                             .Where(u =>
                                 u.Id != userId &&
                                 u.IsStripeSubscriptionPaid &&
                                 u.LoveCategoryInfo != null &&
                                 u.UserInfo != null && (
-                                    !u.InitiatedMatches.Any(m => m.InitiatorId == u.Id && m.ReceiverId == userId) &&
-                                    !u.ReceivedMatches.Any(m => m.ReceiverId == u.Id && m.InitiatorId == userId)
+                                    !userMatches.Any(m =>
+                                        m.InitiatorId == u.Id && m.ReceiverId == userId && m.IsDisliked) &&
+                                    !userMatches.Any(m =>
+                                        m.ReceiverId == u.Id && m.InitiatorId == userId && m.IsDisliked)
                                 ))
                             .OrderBy(x => Guid.NewGuid())
                             .Take(5)
@@ -364,6 +359,7 @@ public class MatchService : IMatchService
                     case GetMatchType.New:
                     {
                         users = await _dataContext.Users
+                            .AsNoTracking()
                             .Include(u => u.UserInfo)
                             .ThenInclude(u => u.Images)
                             .Include(u => u.WorkCategoryInfo)
@@ -374,8 +370,10 @@ public class MatchService : IMatchService
                                 u.IsStripeSubscriptionPaid &&
                                 u.WorkCategoryInfo != null &&
                                 u.UserInfo != null && (
-                                    !u.InitiatedMatches.Any(m => m.InitiatorId == u.Id && m.ReceiverId == userId) &&
-                                    !u.ReceivedMatches.Any(m => m.ReceiverId == u.Id && m.InitiatorId == userId)
+                                    !userMatches.Any(m =>
+                                        m.InitiatorId == u.Id && m.ReceiverId == userId && m.IsDisliked) &&
+                                    !userMatches.Any(m =>
+                                        m.ReceiverId == u.Id && m.InitiatorId == userId && m.IsDisliked)
                                 ))
                             .OrderBy(x => Guid.NewGuid())
                             .Take(5)
