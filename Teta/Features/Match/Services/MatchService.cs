@@ -192,8 +192,6 @@ public class MatchService : IMatchService
                             .Include(u => u.UserInfo)
                             .ThenInclude(u => u.Images)
                             .Include(u => u.FriendsCategoryInfo)
-                            .Include(u => u.ReceivedMatches)
-                            .Include(u => u.InitiatedMatches)
                             .Where(u =>
                                 u.Id != userId &&
                                 u.IsStripeSubscriptionPaid &&
@@ -363,8 +361,6 @@ public class MatchService : IMatchService
                             .Include(u => u.UserInfo)
                             .ThenInclude(u => u.Images)
                             .Include(u => u.WorkCategoryInfo)
-                            .Include(u => u.ReceivedMatches)
-                            .Include(u => u.InitiatedMatches)
                             .Where(u =>
                                 u.Id != userId &&
                                 u.IsStripeSubscriptionPaid &&
