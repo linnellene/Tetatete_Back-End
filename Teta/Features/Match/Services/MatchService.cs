@@ -116,7 +116,8 @@ public class MatchService : IMatchService
                 .ThenInclude(r => r.UserInfo)
                 .Include(m => m.Initiator)
                 .ThenInclude(i => i.UserInfo)
-                .FirstOrDefaultAsync(m => m.ReceiverId == from && m.InitiatorId == to);
+                .FirstOrDefaultAsync(m =>
+                    (m.ReceiverId == from && m.InitiatorId == to) || (m.ReceiverId == to && m.InitiatorId == from));
 
         if (existingMatch is not null)
         {
