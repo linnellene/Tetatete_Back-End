@@ -137,6 +137,24 @@ public class MatchService : IMatchService
             };
 
             await _dataContext.Chats.AddAsync(newChat);
+
+            var newNotificationToSender = new NotificationEntity
+            {
+                UserId = existingMatch.InitiatorId,
+                Message = $"New match with {existingMatch.Receiver.UserInfo.FullName}!"
+            };
+
+            var newNotificationToReceiver = new NotificationEntity
+            {
+                UserId = existingMatch.ReceiverId,
+                Message = $"New match with {existingMatch.Initiator.UserInfo.FullName}!"
+            };
+
+            await _dataContext.Notifications.AddRangeAsync(new List<NotificationEntity>
+            {
+                newNotificationToReceiver, newNotificationToSender
+            });
+
             await _dataContext.SaveChangesAsync();
 
             return;

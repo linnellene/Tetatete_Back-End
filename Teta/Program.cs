@@ -10,6 +10,8 @@ using TetaBackend.Features.Chat.Interfaces;
 using TetaBackend.Features.Chat.Services;
 using TetaBackend.Features.Match.Interfaces;
 using TetaBackend.Features.Match.Services;
+using TetaBackend.Features.Notifications;
+using TetaBackend.Features.Notifications.Interfaces;
 using TetaBackend.Features.Shared.Middlewares;
 using TetaBackend.Features.User.Interfaces;
 using TetaBackend.Features.User.Services;
@@ -29,6 +31,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 

@@ -42,4 +42,6 @@ public class UserEntity : BaseEntity
     public ICollection<ChatEntity> ChatsA { get; set; }
     
     public ICollection<ChatEntity> ChatsB { get; set; }
+    
+    public ICollection<NotificationEntity> Notifications { get; set; }
 }

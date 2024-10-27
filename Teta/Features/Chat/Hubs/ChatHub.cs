@@ -53,7 +53,22 @@ public class ChatHub : Hub
             Content = message,
         };
 
-        _dataContext.Messages.Add(newMessage);
+        await _dataContext.Messages.AddAsync(newMessage);
+
+        var senderUserInfo = await _dataContext.UserInfos.FirstOrDefaultAsync(u => u.UserId == senderIdGuid);
+
+        if (senderUserInfo is null)
+        {
+            throw new Exception("Sender has no info");
+        }
+
+        var notificationToReceiver = new NotificationEntity
+        {
+            UserId = userId,
+            Message = $"New message from {senderUserInfo.FullName}"
+        };
+
+        await _dataContext.Notifications.AddAsync(notificationToReceiver);
         
         await _dataContext.SaveChangesAsync();
 

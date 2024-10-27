@@ -37,6 +37,8 @@ public class DataContext: DbContext
     
     public DbSet<MessageEntity> Messages { get; set; }
     
+    public DbSet<NotificationEntity> Notifications { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserEntity>()
