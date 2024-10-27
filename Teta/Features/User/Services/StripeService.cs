@@ -132,6 +132,7 @@ public class StripeService : IStripeService
 
         user.StripeSubscriptionId = null;
         user.StripeSubscriptionExpiresAt = null;
+        user.IsStripeSubscriptionPaid = false;
 
         await _dataContext.SaveChangesAsync();
     }
