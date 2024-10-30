@@ -150,6 +150,12 @@ public class UserService : IUserService
             .Include(u => u.Location)
             .Include(u => u.UserInfoLanguages)
             .ThenInclude(ul => ul.Language)
+            .Include(u => u.User)
+            .ThenInclude(u => u.FriendsCategoryInfo)
+            .Include(u => u.User)
+            .ThenInclude(u => u.LoveCategoryInfo)
+            .Include(u => u.User)
+            .ThenInclude(u => u.WorkCategoryInfo)
             .FirstOrDefaultAsync(u => u.UserId == userId);
 
         if (existingInfo is null)
@@ -167,6 +173,9 @@ public class UserService : IUserService
             Age = existingInfo.Age,
             Languages = existingInfo.UserInfoLanguages.Select(l => l.Language.Name),
             ProfilePictureUrls = existingInfo.Images.Select(i => i.Url),
+            FriendsCategoryInfo = existingInfo.User.FriendsCategoryInfo,
+            LoveCategoryInfo = existingInfo.User.LoveCategoryInfo,
+            WorkCategoryInfo = existingInfo.User.WorkCategoryInfo,
         };
     }
 
