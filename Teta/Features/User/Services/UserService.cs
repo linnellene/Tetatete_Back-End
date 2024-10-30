@@ -143,39 +143,47 @@ public class UserService : IUserService
 
     public async Task<GetUserByIdResponseDto?> GetUserInfoForChats(Guid userId)
     {
-        var existingInfo = await _dataContext.UserInfos
+        CategoryType? type = await GetFulfilledInfoType(userId);
+
+        var existingInfo = _dataContext.UserInfos
+            .AsNoTracking()
             .Include(u => u.Images)
             .Include(u => u.Gender)
             .Include(u => u.PlaceOfBirth)
             .Include(u => u.Location)
             .Include(u => u.UserInfoLanguages)
             .ThenInclude(ul => ul.Language)
-            .Include(u => u.User)
-            .ThenInclude(u => u.FriendsCategoryInfo)
-            .Include(u => u.User)
-            .ThenInclude(u => u.LoveCategoryInfo)
-            .Include(u => u.User)
-            .ThenInclude(u => u.WorkCategoryInfo)
-            .FirstOrDefaultAsync(u => u.UserId == userId);
+            .Include(u => u.User);
 
-        if (existingInfo is null)
+        UserInfoEntity? resultInfo = type switch
+        {
+            CategoryType.Friends => await existingInfo.ThenInclude(u => u.FriendsCategoryInfo)
+                .FirstOrDefaultAsync(u => u.UserId == userId),
+            CategoryType.Love => await existingInfo.ThenInclude(u => u.LoveCategoryInfo)
+                .FirstOrDefaultAsync(u => u.UserId == userId),
+            CategoryType.Work => await existingInfo.ThenInclude(u => u.WorkCategoryInfo)
+                .FirstOrDefaultAsync(u => u.UserId == userId),
+            _ => await existingInfo.FirstOrDefaultAsync(u => u.UserId == userId)
+        };
+
+        if (resultInfo is null)
         {
             return null;
         }
 
         return new GetUserByIdResponseDto
         {
-            PlaceOfBirth = existingInfo.PlaceOfBirth.Country,
-            Gender = existingInfo.Gender.Name,
-            Location = existingInfo.Location.Country,
-            FullName = existingInfo.FullName,
-            About = existingInfo.About,
-            Age = existingInfo.Age,
-            Languages = existingInfo.UserInfoLanguages.Select(l => l.Language.Name),
-            ProfilePictureUrls = existingInfo.Images.Select(i => i.Url),
-            FriendsCategoryInfo = existingInfo.User.FriendsCategoryInfo,
-            LoveCategoryInfo = existingInfo.User.LoveCategoryInfo,
-            WorkCategoryInfo = existingInfo.User.WorkCategoryInfo,
+            PlaceOfBirth = resultInfo.PlaceOfBirth.Country,
+            Gender = resultInfo.Gender.Name,
+            Location = resultInfo.Location.Country,
+            FullName = resultInfo.FullName,
+            About = resultInfo.About,
+            Age = resultInfo.Age,
+            Languages = resultInfo.UserInfoLanguages.Select(l => l.Language.Name),
+            ProfilePictureUrls = resultInfo.Images.Select(i => i.Url),
+            FriendsCategoryInfo = type == CategoryType.Friends ? resultInfo.User.FriendsCategoryInfo : null,
+            LoveCategoryInfo = type == CategoryType.Love ? resultInfo.User.LoveCategoryInfo : null,
+            WorkCategoryInfo = type == CategoryType.Work ? resultInfo.User.WorkCategoryInfo : null,
         };
     }
 
