@@ -39,12 +39,12 @@ public class UserController : ControllerBase
         var userId = HttpContext.Items["UserId"]?.ToString()!;
         var guidUserId = new Guid(userId);
 
-        var isInChat = await _userService.CheckIfUsersAreInChat(dto.Id, guidUserId);
-        if (dto.Id != guidUserId && !isInChat)
-        {
-            return BadRequest(
-                "Cannot get info of the user that is not in the chat with current user or is not current user.");
-        }
+        // var isInChat = await _userService.CheckIfUsersAreInChat(dto.Id, guidUserId);
+        // if (dto.Id != guidUserId && !isInChat)
+        // {
+        //     return BadRequest(
+        //         "Cannot get info of the user that is not in the chat with current user or is not current user.");
+        // }
 
         var userInfo = await _userService.GetUserInfoForChats(dto.Id);
 
