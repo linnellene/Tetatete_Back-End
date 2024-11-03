@@ -217,10 +217,9 @@ public class MatchService : IMatchService
                                 u.FriendsCategoryInfo != null &&
                                 u.UserInfo != null && (
                                     !userMatches.Any(m =>
-                                        m.InitiatorId == u.Id && m.ReceiverId == userId &&
-                                        (m.IsDisliked || m.IsMatch)) &&
+                                        m.InitiatorId == u.Id && m.ReceiverId == userId) &&
                                     !userMatches.Any(m =>
-                                        m.ReceiverId == u.Id && m.InitiatorId == userId && (m.IsDisliked || m.IsMatch))
+                                        m.ReceiverId == u.Id && m.InitiatorId == userId )
                                 ))
                             .OrderBy(x => Guid.NewGuid())
                             .Take(5)
@@ -301,10 +300,9 @@ public class MatchService : IMatchService
                                 u.LoveCategoryInfo != null &&
                                 u.UserInfo != null && (
                                     !userMatches.Any(m =>
-                                        m.InitiatorId == u.Id && m.ReceiverId == userId &&
-                                        (m.IsDisliked || m.IsMatch)) &&
+                                        m.InitiatorId == u.Id && m.ReceiverId == userId) &&
                                     !userMatches.Any(m =>
-                                        m.ReceiverId == u.Id && m.InitiatorId == userId && (m.IsDisliked || m.IsMatch))
+                                        m.ReceiverId == u.Id && m.InitiatorId == userId)
                                 ))
                             .OrderBy(x => Guid.NewGuid())
                             .Take(5)
@@ -388,10 +386,9 @@ public class MatchService : IMatchService
                                 u.WorkCategoryInfo != null &&
                                 u.UserInfo != null && (
                                     !userMatches.Any(m =>
-                                        m.InitiatorId == u.Id && m.ReceiverId == userId &&
-                                        (m.IsDisliked || m.IsMatch)) &&
+                                        m.InitiatorId == u.Id && m.ReceiverId == userId) &&
                                     !userMatches.Any(m =>
-                                        m.ReceiverId == u.Id && m.InitiatorId == userId && (m.IsDisliked || m.IsMatch))
+                                        m.ReceiverId == u.Id && m.InitiatorId == userId)
                                 ))
                             .OrderBy(x => Guid.NewGuid())
                             .Take(5)
