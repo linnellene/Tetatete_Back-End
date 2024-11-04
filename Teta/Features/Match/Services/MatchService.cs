@@ -217,7 +217,7 @@ public class MatchService : IMatchService
                                 u.FriendsCategoryInfo != null &&
                                 u.UserInfo != null && (
                                     !userMatches.Any(m =>
-                                        m.InitiatorId == u.Id && m.ReceiverId == userId) &&
+                                        m.InitiatorId == u.Id && m.ReceiverId == userId && m.IsMatch) &&
                                     !userMatches.Any(m =>
                                         m.ReceiverId == u.Id && m.InitiatorId == userId )
                                 ))
@@ -300,7 +300,7 @@ public class MatchService : IMatchService
                                 u.LoveCategoryInfo != null &&
                                 u.UserInfo != null && (
                                     !userMatches.Any(m =>
-                                        m.InitiatorId == u.Id && m.ReceiverId == userId) &&
+                                        m.InitiatorId == u.Id && m.ReceiverId == userId && m.IsMatch) &&
                                     !userMatches.Any(m =>
                                         m.ReceiverId == u.Id && m.InitiatorId == userId)
                                 ))
@@ -386,7 +386,7 @@ public class MatchService : IMatchService
                                 u.WorkCategoryInfo != null &&
                                 u.UserInfo != null && (
                                     !userMatches.Any(m =>
-                                        m.InitiatorId == u.Id && m.ReceiverId == userId) &&
+                                        m.InitiatorId == u.Id && m.ReceiverId == userId && m.IsMatch) &&
                                     !userMatches.Any(m =>
                                         m.ReceiverId == u.Id && m.InitiatorId == userId)
                                 ))
