@@ -17,7 +17,7 @@ public class UserEntity : BaseEntity
     
     public DateTimeOffset? StripeSubscriptionExpiresAt  { get; set; }
     
-    public bool IsStripeSubscriptionPaid { get; set; } = false;
+    public bool IsStripeSubscriptionPaid { get; set; } = true;
 
     public Guid? UserInfoId { get; set; }
 
